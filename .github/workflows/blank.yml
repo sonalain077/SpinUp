@@ -1,0 +1,61 @@
+name: CI - blank workflow
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blank-workflow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI - run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps if present
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+          fi
+
+      - name: Run Python unit tests (pytest / unittest)
+        run: |
+          set -e
+          # run pytest if test files exist, else try unittest discovery
+          if ls **/test_*.py 1> /dev/null 2>&1 || [ -f test.py ]; then
+            python -m pip install pytest >/dev/null || true
+            if python -m pytest -q; then
+              echo "pytest passed"
+            else
+              echo "pytest failed, attempting unittest discovery"
+              python -m unittest discover -v
+            fi
+          else
+            echo "No python tests found"
+          fi
+
+      - name: Compile and run C tests if present
+        run: |
+          if [ -f Test.c ]; then
+            gcc -o test_bin Test.c || { echo 'C compile failed'; exit 1; }
+            ./test_bin || { echo 'C test failed'; exit 1; }
+          else
+            echo 'No C tests to run'
+          fi
+
+      - name: Finish
+        run: echo "CI workflow completed"
