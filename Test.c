@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(){
-    println("tired");
+    printf("tired");
     return 0;
 }
