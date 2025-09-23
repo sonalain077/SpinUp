@@ -1,1 +1,39 @@
-hello this is a test
+DESCRIPTIF DU MARCHE
+Contexte
+Votre société a remporté un appel d’offre public lancé par une grande agglomération française. Le projet Park & See vise à moderniser la gestion du
+stationnement urbain à travers une solution numérique évolutive.
+Phasage du projet
+Phase 1 – Stationnement en parkings publics : Cette première étape se concentre exclusivement sur les parkings gérés par la collectivité. Elle constitue le périmètre opérationnel du projet à court terme.
+Phase 2 – Stationnement sur voirie : Mentionnée uniquement pour contextualiser le projet dans les évolutions réglementaires récentes. Elle n’est pas
+requise de manière obligatoire dans le cadre du présent développement.
+Objectifs de la Phase 1
+Suivi en temps réel de l’occupation des places de parking.
+Identification des véhicules stationnés (type, immatriculation).
+Contrôle du paiement du stationnement.
+Mise à disposition d’une interface usager pour le paiement et le suivi.
+Et d’une interface fixe et mobile de suivi en temps réel de l'occupation et contrôle du paiement pour les contrôleurs (agents de la mairie & police
+municipale)
+Contexte réglementaire (pertinent pour la phase 2)
+Fin des ZFE obligatoires au niveau national, maintien possible à l’échelle locale.
+Stationnement payant pour les deux-roues motorisés dans certaines villes ; interdiction du stationnement sur trottoir.
+Encadrement strict du stationnement des trottinettes électriques en libre-service.
+Projet virtuel – Park & See (1/2)
+FB1
+Diapositive 14
+FB1 Pour les usagers : Interface mobile paiement et suivi
+Pour les contrôleurs (Agent de la mairie & police municipale) : Interface fixe et mobile suivi en temps réel de
+l'occupation et contrôle du paiement
+BEAULANT, Frederic; 2025-09-02T12:42:44.235
+FB1 0 J’enlèverais «nombre d’occupants»
+BEAULANT, Frederic; 2025-09-03T09:19:30.06
+
+
+
+
+
+
+
+brouillon : 
+
+faire des tests unitaires = BONUS
+shift + entrée pour rester dans le même <i class="fas fa-person-dolly-empty    "></i>
