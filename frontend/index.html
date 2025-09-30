@@ -4,94 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Park & See - Réservation de Parking</title>
-    <link rel="stylesheet" href="styles.css">
+    
+    <!-- React et React DOM via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel pour transformer JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Styles CSS -->
+    <link rel="stylesheet" href="src/styles/App.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🚗 Park & See</h1>
-            <p>Réservation de parking en temps réel</p>
-        </header>
-
-        <main>
-            <form id="reservationForm" class="reservation-form">
-                <div class="form-group">
-                    <label for="licencePlate">Plaque d'immatriculation :</label>
-                    <input type="text" id="licencePlate" name="licencePlate" 
-                           pattern="[A-Z]{2}-[0-9]{3}-[A-Z]{2}" required>
-                    <small>Format : AB-123-CD</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="vehicleType">Type de véhicule :</label>
-                    <select id="vehicleType" name="vehicleType" required>
-                        <option value="">-- Sélectionnez un type de véhicule --</option>
-                        <option value="2_roues">2 roues (moto, scooter)</option>
-                        <option value="voiture">Voiture</option>
-                        <option value="camionnette">Camionnette</option>
-                        <option value="camion">Camion</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="startAt">Début du stationnement :</label>
-                    <input type="datetime-local" id="startAt" name="startAt" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="durationMinutes">Durée :</label>
-                    <select id="durationMinutes" name="durationMinutes" required>
-                        <option value="">-- Sélectionnez une durée --</option>
-                        <option value="30">30 min</option>
-                        <option value="60">1h</option>
-                        <option value="90">1h 30min</option>
-                        <option value="120">2h</option>
-                        <option value="150">2h 30min</option>
-                        <option value="180">3h</option>
-                        <option value="210">3h 30min</option>
-                        <option value="240">4h</option>
-                        <option value="270">4h 30min</option>
-                        <option value="300">5h</option>
-                        <option value="330">5h 30min</option>
-                        <option value="360">6h</option>
-                        <option value="390">6h 30min</option>
-                        <option value="420">7h</option>
-                        <option value="450">7h 30min</option>
-                        <option value="480">8h</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="address">Parking :</label>
-                    <select id="address" name="address" required>
-                        <option value="">-- Sélectionnez un parking --</option>
-                        <option value="Parking Centre Ville">Parking Centre Ville</option>
-                        <option value="Parking Souterrain">Parking Souterrain</option>
-                        <option value="Parking Mairie">Parking Mairie</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="paymentToken">Token de paiement :</label>
-                    <input type="text" id="paymentToken" name="paymentToken" 
-                           value="demo" readonly>
-                    <small>Mode démo - paiement simulé</small>
-                </div>
-
-                <button type="submit" id="submitBtn" class="submit-btn">
-                    <span id="btnText">🅿️ Réserver et Payer</span>
-                    <span id="loadingSpinner" class="spinner" style="display: none;">⏳</span>
-                </button>
-            </form>
-
-            <div id="result" class="result" style="display: none;"></div>
-        </main>
-
-        <footer>
-            <p>Park & See - Phase 1 : Stationnement en parkings publics</p>
-        </footer>
-    </div>
-
-    <script src="script.js"></script>
+    <div id="root"></div>
+    
+    <!-- Types TypeScript (simulés en JS) -->
+    <script type="text/babel" src="src/types/index.js"></script>
+    
+    <!-- Services -->
+    <script type="text/babel" src="src/services/parkingApi.js"></script>
+    
+    <!-- Components avec JSX -->
+    <script type="text/babel" src="src/components/ParkingReservationJSX.js"></script>
+    
+    <!-- App principal avec JSX -->
+    <script type="text/babel" src="src/AppJSX.js"></script>
+    
+    <!-- Point d'entrée principal -->
+    <script type="text/babel" src="src/index.js"></script>
 </body>
 </html>

@@ -1,0 +1,51 @@
+/* App.css - Styles globaux pour l'application Park & See */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre de statut en haut */
+.status-bar {
+  position: fixed;
+  top: 0;
+  right: 20px;
+  z-index: 1000;
+  padding: 10px 0;
+}
+
+/* Indicateur de connectivité */
+.connection-status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.connection-status.connected {
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.connection-status.disconnected {
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .status-bar {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .connection-status {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+}
