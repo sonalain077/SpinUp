@@ -26,6 +26,7 @@ public class ParkingService {
         Reservation r = new Reservation();
         r.id = id;
         r.licencePlate = request.getLicencePlate();
+        r.vehicleType = request.getVehicleType();
         r.startAt = request.getStartAt();
         r.durationMinutes = request.getDurationMinutes();
         r.address = request.getAddress();
@@ -45,6 +46,7 @@ public class ParkingService {
     static class Reservation {
         String id;
         String licencePlate;
+        String vehicleType;
         LocalDateTime startAt;
         Integer durationMinutes;
         String address;

@@ -192,12 +192,43 @@ footer {
 }
 
 /* Input validation styles */
-input:invalid {
+input:invalid:not(:placeholder-shown) {
     border-color: #dc3545;
 }
 
-input:valid {
+input:valid:not(:placeholder-shown) {
     border-color: #28a745;
+}
+
+select:invalid {
+    border-color: #dc3545;
+}
+
+select:valid {
+    border-color: #28a745;
+}
+
+/* Style pour les champs obligatoires vides */
+input:required:invalid {
+    border-color: #dc3545;
+}
+
+select:required:invalid {
+    border-color: #dc3545;
+}
+
+/* Style par défaut pour les champs vides */
+input:not(:focus):placeholder-shown {
+    border-color: #e1e5e9;
+}
+
+/* Bouton désactivé plus visible */
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: #6c757d;
 }
 
 /* Parking spots visualization (pour future extension) */

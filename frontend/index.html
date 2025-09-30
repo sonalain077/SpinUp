@@ -18,8 +18,19 @@
                 <div class="form-group">
                     <label for="licencePlate">Plaque d'immatriculation :</label>
                     <input type="text" id="licencePlate" name="licencePlate" 
-                           placeholder="AB-123-CD" pattern="[A-Z]{2}-[0-9]{3}-[A-Z]{2}" required>
+                           pattern="[A-Z]{2}-[0-9]{3}-[A-Z]{2}" required>
                     <small>Format : AB-123-CD</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="vehicleType">Type de véhicule :</label>
+                    <select id="vehicleType" name="vehicleType" required>
+                        <option value="">-- Sélectionnez un type de véhicule --</option>
+                        <option value="2_roues">2 roues (moto, scooter)</option>
+                        <option value="voiture">Voiture</option>
+                        <option value="camionnette">Camionnette</option>
+                        <option value="camion">Camion</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -30,18 +41,34 @@
                 <div class="form-group">
                     <label for="durationMinutes">Durée :</label>
                     <select id="durationMinutes" name="durationMinutes" required>
-                        <option value="30">30 minutes</option>
-                        <option value="60" selected>1 heure</option>
-                        <option value="120">2 heures</option>
-                        <option value="240">4 heures</option>
-                        <option value="480">8 heures</option>
+                        <option value="">-- Sélectionnez une durée --</option>
+                        <option value="30">30 min</option>
+                        <option value="60">1h</option>
+                        <option value="90">1h 30min</option>
+                        <option value="120">2h</option>
+                        <option value="150">2h 30min</option>
+                        <option value="180">3h</option>
+                        <option value="210">3h 30min</option>
+                        <option value="240">4h</option>
+                        <option value="270">4h 30min</option>
+                        <option value="300">5h</option>
+                        <option value="330">5h 30min</option>
+                        <option value="360">6h</option>
+                        <option value="390">6h 30min</option>
+                        <option value="420">7h</option>
+                        <option value="450">7h 30min</option>
+                        <option value="480">8h</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="address">Adresse du parking :</label>
-                    <input type="text" id="address" name="address" 
-                           placeholder="Parking Central" required>
+                    <label for="address">Parking :</label>
+                    <select id="address" name="address" required>
+                        <option value="">-- Sélectionnez un parking --</option>
+                        <option value="Parking Centre Ville">Parking Centre Ville</option>
+                        <option value="Parking Souterrain">Parking Souterrain</option>
+                        <option value="Parking Mairie">Parking Mairie</option>
+                    </select>
                 </div>
 
                 <div class="form-group">

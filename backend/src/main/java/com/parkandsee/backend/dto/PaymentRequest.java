@@ -10,6 +10,9 @@ public class PaymentRequest {
     @NotBlank
     private String licencePlate;
 
+    @NotBlank
+    private String vehicleType;
+
     @NotNull
     @FutureOrPresent
     private LocalDateTime startAt;
@@ -30,6 +33,14 @@ public class PaymentRequest {
 
     public void setLicencePlate(String licencePlate) {
         this.licencePlate = licencePlate;
+    }
+
+    public String getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(String vehicleType) {
+        this.vehicleType = vehicleType;
     }
 
     public LocalDateTime getStartAt() {

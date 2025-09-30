@@ -18,9 +18,17 @@ class ParkAndSeeAPI {
         // Format automatique de la plaque d'immatriculation
         const licencePlateInput = document.getElementById('licencePlate');
         licencePlateInput.addEventListener('input', (e) => this.formatLicencePlate(e));
+        licencePlateInput.addEventListener('keydown', (e) => this.handleLicencePlateKeydown(e));
         
-        // Validation en temps réel
+        // Validation visuelle en temps réel pour tous les champs
         this.form.addEventListener('input', () => this.validateForm());
+        this.form.addEventListener('change', () => this.validateForm());
+        
+        // Validation visuelle pour les selects
+        ['vehicleType', 'durationMinutes', 'address'].forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            field.addEventListener('change', (e) => this.validateSelectField(e));
+        });
     }
 
     setDefaultDateTime() {
@@ -30,35 +38,114 @@ class ParkAndSeeAPI {
         document.getElementById('startAt').value = formatted;
     }
 
+    handleLicencePlateKeydown(event) {
+        const input = event.target;
+        const cursorPos = input.selectionStart;
+        const value = input.value;
+        
+        // Gestion de la touche Suppr (Delete) et Backspace
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            // Si on est sur un tiret, on passe au caractère suivant/précédent
+            if (event.key === 'Delete' && value[cursorPos] === '-') {
+                event.preventDefault();
+                // Supprime le caractère après le tiret
+                if (cursorPos + 1 < value.length) {
+                    const newValue = value.slice(0, cursorPos + 1) + value.slice(cursorPos + 2);
+                    input.value = newValue;
+                    input.setSelectionRange(cursorPos, cursorPos);
+                    this.formatLicencePlate({ target: input });
+                }
+                return;
+            }
+            
+            if (event.key === 'Backspace' && cursorPos > 0 && value[cursorPos - 1] === '-') {
+                event.preventDefault();
+                // Supprime le caractère avant le tiret
+                if (cursorPos >= 2) {
+                    const newValue = value.slice(0, cursorPos - 2) + value.slice(cursorPos - 1);
+                    input.value = newValue;
+                    input.setSelectionRange(cursorPos - 2, cursorPos - 2);
+                    this.formatLicencePlate({ target: input });
+                }
+                return;
+            }
+        }
+    }
+
     formatLicencePlate(event) {
-        let value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const input = event.target;
+        const cursorPos = input.selectionStart;
+        let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         
-        if (value.length > 2) {
-            value = value.slice(0, 2) + '-' + value.slice(2);
-        }
-        if (value.length > 6) {
-            value = value.slice(0, 6) + '-' + value.slice(6);
-        }
-        if (value.length > 9) {
-            value = value.slice(0, 9);
+        // Formatage automatique : XX-XXX-XX
+        let formattedValue = '';
+        if (value.length >= 2) {
+            formattedValue = value.slice(0, 2) + '-' + value.slice(2);
+        } else {
+            formattedValue = value;
         }
         
-        event.target.value = value;
+        if (value.length >= 5) {
+            formattedValue = value.slice(0, 2) + '-' + value.slice(2, 5) + '-' + value.slice(5);
+        }
+        
+        if (value.length > 7) {
+            formattedValue = value.slice(0, 2) + '-' + value.slice(2, 5) + '-' + value.slice(5, 7);
+        }
+        
+        // Calcul de la nouvelle position du curseur
+        let newCursorPos = cursorPos;
+        if (input.value.length < formattedValue.length) {
+            // Un tiret a été ajouté
+            if (formattedValue[cursorPos] === '-') {
+                newCursorPos = cursorPos + 1;
+            }
+        }
+        
+        input.value = formattedValue;
+        
+        // Repositionner le curseur
+        setTimeout(() => {
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+        
+        // Validation visuelle en temps réel
+        const isValidFormat = /^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/.test(formattedValue);
+        if (formattedValue.length === 0) {
+            input.style.borderColor = '#e1e5e9'; // Neutre si vide
+        } else if (isValidFormat) {
+            input.style.borderColor = '#28a745'; // Vert si valide
+        } else {
+            input.style.borderColor = '#dc3545'; // Rouge si invalide
+        }
     }
 
     validateForm() {
         const formData = new FormData(this.form);
         const licencePlate = formData.get('licencePlate');
+        const vehicleType = formData.get('vehicleType');
         const startAt = formData.get('startAt');
+        const durationMinutes = formData.get('durationMinutes');
         const address = formData.get('address');
         
         const isValid = licencePlate && 
                        licencePlate.match(/^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/) &&
+                       vehicleType &&
                        startAt && 
+                       durationMinutes &&
                        address;
                        
         this.submitBtn.disabled = !isValid;
         return isValid;
+    }
+
+    validateSelectField(event) {
+        const field = event.target;
+        if (field.value === '') {
+            field.style.borderColor = '#dc3545'; // Rouge si vide
+        } else {
+            field.style.borderColor = '#28a745'; // Vert si sélectionné
+        }
     }
 
     async handleSubmit(event) {
@@ -72,6 +159,7 @@ class ParkAndSeeAPI {
         const formData = new FormData(this.form);
         const reservationData = {
             licencePlate: formData.get('licencePlate'),
+            vehicleType: formData.get('vehicleType'),
             startAt: formData.get('startAt'),
             durationMinutes: parseInt(formData.get('durationMinutes')),
             address: formData.get('address'),
