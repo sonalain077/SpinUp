@@ -157,14 +157,53 @@ class ParkAndSeeAPI {
         }
 
         const formData = new FormData(this.form);
+        
+        // Formatage de la date pour le backend (ISO format)
+        let startAtValue = formData.get('startAt');
+        if (startAtValue && !startAtValue.includes('T')) {
+            // Si pas de T, ajouter les secondes
+            startAtValue += ':00';
+        } else if (startAtValue && !startAtValue.includes('.')) {
+            // Ajouter les secondes si manquantes
+            startAtValue += ':00';
+        }
+        
         const reservationData = {
             licencePlate: formData.get('licencePlate'),
             vehicleType: formData.get('vehicleType'),
-            startAt: formData.get('startAt'),
+            startAt: startAtValue, // Format: 2025-09-30T15:00:00
             durationMinutes: parseInt(formData.get('durationMinutes')),
             address: formData.get('address'),
-            paymentToken: formData.get('paymentToken')
+            paymentToken: formData.get('paymentToken') || 'demo'
         };
+
+        // Validation côté client avant envoi
+        console.log('Données avant validation:', reservationData);
+        
+        if (!reservationData.licencePlate || !reservationData.licencePlate.match(/^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/)) {
+            this.showResult('❌ Format de plaque invalide', 'error');
+            return;
+        }
+        
+        if (!reservationData.vehicleType) {
+            this.showResult('❌ Type de véhicule requis', 'error');
+            return;
+        }
+        
+        if (!reservationData.startAt) {
+            this.showResult('❌ Date/heure de début requise', 'error');
+            return;
+        }
+        
+        if (!reservationData.durationMinutes || isNaN(reservationData.durationMinutes)) {
+            this.showResult('❌ Durée invalide', 'error');
+            return;
+        }
+        
+        if (!reservationData.address) {
+            this.showResult('❌ Parking requis', 'error');
+            return;
+        }
 
         this.setLoading(true);
         
@@ -192,6 +231,7 @@ class ParkAndSeeAPI {
     async makeReservation(data) {
         console.log('Tentative de réservation avec les données:', data);
         console.log('URL utilisée:', `${this.baseURL}/parking/reserve`);
+        console.log('Données JSON envoyées:', JSON.stringify(data, null, 2));
         
         try {
             const response = await fetch(`${this.baseURL}/parking/reserve`, {
@@ -209,7 +249,21 @@ class ParkAndSeeAPI {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Erreur de réponse:', errorText);
-                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                
+                // Tentative de parse JSON pour plus de détails
+                let errorDetails = errorText;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    if (errorJson.message) {
+                        errorDetails = errorJson.message;
+                    } else if (errorJson.error) {
+                        errorDetails = errorJson.error;
+                    }
+                } catch (e) {
+                    // Si ce n'est pas du JSON, garder le texte brut
+                }
+                
+                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText} - ${errorDetails}`);
             }
 
             const result = await response.json();

@@ -19,6 +19,15 @@ public class ParkingController {
 
     @PostMapping("/reserve")
     public ResponseEntity<PaymentResponse> reserveAndPay(@Valid @RequestBody PaymentRequest request) {
+        System.out.println("=== REQUÊTE REÇUE ===");
+        System.out.println("Plaque: " + request.getLicencePlate());
+        System.out.println("Type véhicule: " + request.getVehicleType());
+        System.out.println("Début: " + request.getStartAt());
+        System.out.println("Durée: " + request.getDurationMinutes());
+        System.out.println("Adresse: " + request.getAddress());
+        System.out.println("Token: " + request.getPaymentToken());
+        System.out.println("===================");
+        
         PaymentResponse response = parkingService.reserveAndPay(request);
         return ResponseEntity.ok(response);
     }
