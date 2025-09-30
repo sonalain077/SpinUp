@@ -22,4 +22,14 @@ public class ParkingController {
         PaymentResponse response = parkingService.reserveAndPay(request);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("Backend is running!");
+    }
+    
+    @GetMapping("/status")
+    public ResponseEntity<String> status() {
+        return ResponseEntity.ok("{\"status\": \"OK\", \"service\": \"Park & See Backend\"}");
+    }
 }

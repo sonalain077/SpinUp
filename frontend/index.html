@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Park & See - Réservation de Parking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Park & See</h1>
+            <p>Réservation de parking en temps réel</p>
+        </header>
+
+        <main>
+            <form id="reservationForm" class="reservation-form">
+                <div class="form-group">
+                    <label for="licencePlate">Plaque d'immatriculation :</label>
+                    <input type="text" id="licencePlate" name="licencePlate" 
+                           placeholder="AB-123-CD" pattern="[A-Z]{2}-[0-9]{3}-[A-Z]{2}" required>
+                    <small>Format : AB-123-CD</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="startAt">Début du stationnement :</label>
+                    <input type="datetime-local" id="startAt" name="startAt" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="durationMinutes">Durée :</label>
+                    <select id="durationMinutes" name="durationMinutes" required>
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 heure</option>
+                        <option value="120">2 heures</option>
+                        <option value="240">4 heures</option>
+                        <option value="480">8 heures</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Adresse du parking :</label>
+                    <input type="text" id="address" name="address" 
+                           placeholder="Parking Central" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="paymentToken">Token de paiement :</label>
+                    <input type="text" id="paymentToken" name="paymentToken" 
+                           value="demo" readonly>
+                    <small>Mode démo - paiement simulé</small>
+                </div>
+
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span id="btnText">🅿️ Réserver et Payer</span>
+                    <span id="loadingSpinner" class="spinner" style="display: none;">⏳</span>
+                </button>
+            </form>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <p>Park & See - Phase 1 : Stationnement en parkings publics</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
