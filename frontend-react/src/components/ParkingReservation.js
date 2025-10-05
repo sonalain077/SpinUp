@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ParkingReservation.css';
 
 const ParkingReservation = () => {
+  const navigate = useNavigate();
+  
   // État du formulaire
   const [formData, setFormData] = useState({
     licencePlate: '',
@@ -226,8 +229,15 @@ const ParkingReservation = () => {
   return (
     <div className="parking-reservation">
       <header>
-        <h1>🚗 Park & See</h1>
-        <p>Réservation de parking en temps réel</p>
+        <div className="header-content">
+          <button onClick={() => navigate('/')} className="back-button">
+            ← Retour
+          </button>
+          <div className="header-text">
+            <h1>🚗 Park & See</h1>
+            <p>Réservation de parking en temps réel</p>
+          </div>
+        </div>
       </header>
       
       <form className="reservation-form" onSubmit={handleSubmit}>

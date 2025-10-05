@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
+import AgentDashboard from './components/AgentDashboard';
 import './App.css';
 
 function App() {
@@ -45,14 +48,20 @@ function App() {
   const statusInfo = getStatusInfo();
 
   return (
-    <div className="app">
-      <div className="status-bar">
-        <div className={`connection-status ${statusInfo.className}`}>
-          {statusInfo.text}
+    <Router>
+      <div className="app">
+        <div className="status-bar">
+          <div className={`connection-status ${statusInfo.className}`}>
+            {statusInfo.text}
+          </div>
         </div>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/parking-reservation" element={<ParkingReservation />} />
+          <Route path="/agent-dashboard" element={<AgentDashboard />} />
+        </Routes>
       </div>
-      <ParkingReservation />
-    </div>
+    </Router>
   );
 }
 
