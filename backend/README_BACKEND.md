@@ -25,3 +25,30 @@ Réponse :
 Notes :
 - Ceci est un backend minimal avec stockage en mémoire et simulation du paiement.
 - À améliorer : persistance (Postgres), intégration d'un vrai PSP, validation plus fine.
+
+Postgres (local) pour développement
+----------------------------------
+
+Un fichier `docker-compose.yml` a été ajouté à la racine du projet pour lancer un conteneur Postgres :
+
+  POSTGRES_DB=parkandsee
+  POSTGRES_USER=postgres
+  POSTGRES_PASSWORD=example
+
+Pour démarrer Postgres (depuis la racine du repository) :
+
+```powershell
+docker-compose up -d
+```
+
+Puis lancer le backend en lui passant les variables d'environnement (exemple depuis PowerShell) :
+
+```powershell
+cd .\backend
+$env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/parkandsee"
+$env:SPRING_DATASOURCE_USERNAME = "postgres"
+$env:SPRING_DATASOURCE_PASSWORD = "example"
+mvn spring-boot:run
+```
+
+Si Docker/Postgres n'est pas disponible, l'application retombe automatiquement sur une base H2 en mémoire (config par défaut) pour tests rapides.
