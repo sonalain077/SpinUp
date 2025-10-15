@@ -197,12 +197,45 @@ input:not(:focus):placeholder-shown {
   border: 1px solid #f5c6cb;
 }
 
+.result.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
 /* Footer */
 .parking-reservation footer {
   text-align: center;
   color: white;
   margin-top: 20px;
   opacity: 0.8;
+}
+
+/* Informations tarifaires */
+.pricing-info {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.price-reference {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.price-calculation {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #4CAF50;
+  text-align: center;
+}
+
+.price-calculation strong {
+  font-weight: 700;
 }
 
 /* Responsive Design */

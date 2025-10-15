@@ -1,0 +1,329 @@
+/* Confirmation.css - Styles pour la page de confirmation */
+
+.confirmation-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Header */
+.confirmation-page header {
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-text h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header-text p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Contenu principal */
+.confirmation-content {
+  flex: 1;
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  color: #333;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Message de succès */
+.success-message {
+  text-align: center;
+  background: #d4edda;
+  border-radius: 15px;
+  padding: 30px;
+  border: 2px solid #c3e6cb;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+}
+
+.success-message h2 {
+  margin: 0 0 15px 0;
+  font-size: 1.8rem;
+  color: #155724;
+}
+
+.success-message p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #155724;
+}
+
+/* Informations de réservation */
+.reservation-info {
+  background: #f7fafc;
+  border-radius: 15px;
+  padding: 25px;
+  border: 1px solid #e2e8f0;
+}
+
+.reservation-info h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  color: #333;
+  text-align: center;
+}
+
+/* Grille d'informations */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  margin-bottom: 10px;
+}
+
+.info-item.payment {
+  border-left-color: #2196F3;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.info-item.total {
+  border-left-color: #FFC107;
+  background: rgba(255, 193, 7, 0.1);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Bloc temporel spécial */
+.info-item.time-block {
+  flex-direction: column;
+  align-items: stretch;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-left: none;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.time-row:last-child {
+  border-bottom: none;
+}
+
+.time-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.time-value {
+  font-weight: 700;
+  color: white;
+  font-size: 1.1rem;
+  text-align: right;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.info-value {
+  font-weight: 700;
+  color: #333;
+  text-align: right;
+  flex: 1;
+}
+
+/* Informations importantes */
+.important-info {
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 5px solid #FFC107;
+}
+
+.important-info h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.important-info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.important-info li {
+  margin-bottom: 8px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.important-info strong {
+  color: #FFC107;
+  font-weight: 700;
+}
+
+/* Support info */
+.support-info {
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 5px solid #2196F3;
+}
+
+.support-info h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.support-info p {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.support-info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.support-info li {
+  margin-bottom: 5px;
+  color: #333;
+}
+
+/* Message d'erreur */
+.error-message {
+  text-align: center;
+  background: #f8d7da;
+  border-radius: 15px;
+  padding: 30px;
+  border: 2px solid #f1aeb5;
+}
+
+.error-message h2 {
+  margin: 0 0 15px 0;
+  color: #721c24;
+  font-size: 1.8rem;
+}
+
+.error-message p {
+  margin: 0 0 10px 0;
+  color: #721c24;
+}
+
+/* Actions */
+.confirmation-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.home-button {
+  padding: 15px 30px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.home-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Footer */
+.confirmation-page footer {
+  text-align: center;
+  color: white;
+  margin-top: 20px;
+  opacity: 0.8;
+}
+
+.confirmation-page footer p {
+  margin: 5px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .confirmation-page {
+    padding: 15px;
+  }
+  
+  .header-text h1 {
+    font-size: 2rem;
+  }
+  
+  .success-message {
+    padding: 20px;
+  }
+  
+  .reservation-info {
+    padding: 20px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .info-item.total {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+  
+  .home-button {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+  }
+}
