@@ -23,6 +23,19 @@ function Test-Port {
     }
 }
 
+# Fonction pour trouver un port libre
+function Find-FreePort {
+    param([int]$StartPort = 8081)
+    $port = $StartPort
+    while (Test-Port $port) {
+        $port++
+        if ($port -gt 9000) {
+            throw "Aucun port libre trouvé entre $StartPort et 9000"
+        }
+    }
+    return $port
+}
+
 # Fonction pour attendre qu'un service soit prêt
 function Wait-ForService {
     param([string]$Name, [int]$Port, [int]$TimeoutSeconds = 60)
