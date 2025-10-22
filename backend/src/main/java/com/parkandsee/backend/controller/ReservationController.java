@@ -1,0 +1,29 @@
+package com.parkandsee.backend.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.parkandsee.backend.entity.ReservationEntity;
+import com.parkandsee.backend.repository.ReservationRepository;
+
+@RestController
+@RequestMapping("/api/parking")
+public class ReservationController {
+
+    private final ReservationRepository reservationRepository;
+
+    public ReservationController(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
+
+    // List all reservations (for debug / verification). In prod, add paging/auth.
+    @GetMapping("/reservations")
+    public ResponseEntity<List<ReservationEntity>> list() {
+        List<ReservationEntity> all = reservationRepository.findAll();
+        return ResponseEntity.ok(all);
+    }
+}

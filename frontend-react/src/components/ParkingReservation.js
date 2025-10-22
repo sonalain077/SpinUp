@@ -5,6 +5,27 @@ import './ParkingReservation.css';
 const ParkingReservation = () => {
   const navigate = useNavigate();
   
+  // Fonctions utilitaires pour les dates
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const getCurrentDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
+  
   // État du formulaire
   const [formData, setFormData] = useState({
     licencePlate: '',
@@ -20,12 +41,26 @@ const ParkingReservation = () => {
   const [result, setResult] = useState('');
   const [resultType, setResultType] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
+  
+  // Calcul du prix (1€50 les 30 minutes)
+  const calculatePrice = (durationMinutes) => {
+    if (!durationMinutes || durationMinutes <= 0) return 0;
+    const pricePerHalfHour = 1.50;
+    const halfHours = Math.ceil(durationMinutes / 30); // Arrondi au supérieur
+    return (halfHours * pricePerHalfHour).toFixed(2);
+  };
 
-  // Initialisation de la date par défaut
+  // Initialisation de la date par défaut (heure actuelle + 30 minutes minimum)
   useEffect(() => {
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 30); // 30 minutes dans le futur
-    const formatted = now.toISOString().slice(0, 16);
+    now.setMinutes(now.getMinutes() + 30); // 30 minutes dans le futur minimum
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
     setFormData(prev => ({ ...prev, startAt: formatted }));
   }, []);
 
@@ -78,6 +113,24 @@ const ParkingReservation = () => {
     if (name === 'licencePlate') {
       const formatted = formatLicencePlate(value);
       setFormData(prev => ({ ...prev, [name]: formatted }));
+    } else if (name === 'startAt') {
+      // Validation de la date : doit être dans le futur
+      const selectedDate = new Date(value);
+      const now = new Date();
+      
+      if (selectedDate < now) {
+        // Si la date est dans le passé, on la corrige à maintenant + 30 minutes
+        const futureDate = new Date(now.getTime() + 30 * 60000); // +30 minutes
+        const correctedValue = getCurrentDateTime();
+        setFormData(prev => ({ ...prev, [name]: correctedValue }));
+        
+        // Afficher un message d'avertissement
+        setResult('⚠️ La date sélectionnée est dans le passé. Ajustée automatiquement.');
+        setResultType('warning');
+        setTimeout(() => setResult(''), 3000);
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -130,29 +183,38 @@ const ParkingReservation = () => {
 
   // Service API pour communiquer avec le backend
   const reserveParking = async (data) => {
-    console.log('🚀 Envoi vers:', 'http://localhost:8081/api/parking/reserve');
-    console.log('📤 Données:', data);
+    console.log('🚀 DEBUT REQUETE API');
+    console.log('📍 URL:', 'http://localhost:8081/api/parking/reserve');
+    console.log('📤 Données brutes:', JSON.stringify(data, null, 2));
     
-    const response = await fetch('http://localhost:8081/api/parking/reserve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
+    try {
+      const response = await fetch('http://localhost:8081/api/parking/reserve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
 
-    console.log('📥 Status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erreur serveur:', errorText);
-      throw new Error(`Erreur ${response.status}: ${errorText}`);
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', response.headers);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Réponse d\'erreur complète:', errorText);
+        console.error('❌ Status code:', response.status);
+        console.error('❌ Status text:', response.statusText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Réponse succès:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Erreur dans reserveParking:', error);
+      throw error;
     }
-
-    const result = await response.json();
-    console.log('✅ Réponse:', result);
-    return result;
   };
 
   // Soumission du formulaire
@@ -169,13 +231,29 @@ const ParkingReservation = () => {
     setResult('');
     
     try {
-      // Formatage de la date pour le backend (identique à la version HTML)
+      // Formatage de la date pour le backend (format exact : yyyy-MM-dd'T'HH:mm:ss)
       let startAtValue = formData.startAt;
-      if (startAtValue && !startAtValue.includes('T')) {
-        startAtValue += ':00';
-      } else if (startAtValue && !startAtValue.includes('.')) {
-        startAtValue += ':00';
+      
+      console.log('🕐 Date originale du formulaire:', startAtValue);
+      
+      // Si c'est un datetime-local (format: 2025-10-15T23:30), ajouter les secondes
+      if (startAtValue && startAtValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+        startAtValue += ':00';  // Ajouter :00 pour les secondes
+        console.log('🕐 Date après ajout des secondes:', startAtValue);
       }
+      // Si c'est déjà complet mais sans secondes (2025-10-15T23:30:), ajouter 00
+      else if (startAtValue && startAtValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:$/)) {
+        startAtValue += '00';
+        console.log('🕐 Date après ajout final des secondes:', startAtValue);
+      }
+      
+      // Validation finale du format
+      const dateFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+      if (!dateFormatRegex.test(startAtValue)) {
+        throw new Error(`Format de date invalide: ${startAtValue}. Attendu: yyyy-MM-ddTHH:mm:ss`);
+      }
+      
+      console.log('📅 Date finale formatée pour backend:', startAtValue);
       
       const reservationData = {
         licencePlate: formData.licencePlate,
@@ -183,38 +261,54 @@ const ParkingReservation = () => {
         startAt: startAtValue,
         durationMinutes: parseInt(formData.durationMinutes),
         address: formData.address,
-        paymentToken: formData.paymentToken || 'demo'
+        paymentToken: 'pending-payment' // Token temporaire en attente de paiement
       };
       
-      console.log('🚀 Envoi de la réservation:', reservationData);
+      // Validation des données avant envoi
+      console.log('🔍 VALIDATION COMPLETE DES DONNEES:');
+      console.log('- Plaque:', `"${reservationData.licencePlate}"`);
+      console.log('- Type véhicule:', `"${reservationData.vehicleType}"`);
+      console.log('- Date:', `"${reservationData.startAt}"`);
+      console.log('- Durée:', reservationData.durationMinutes, typeof reservationData.durationMinutes);
+      console.log('- Adresse:', `"${reservationData.address}"`);
+      
+      // Vérifications critiques avec messages détaillés
+      if (!reservationData.licencePlate || reservationData.licencePlate.trim() === '') {
+        throw new Error('Plaque d\'immatriculation vide ou invalide');
+      }
+      if (!reservationData.vehicleType || reservationData.vehicleType.trim() === '') {
+        throw new Error('Type de véhicule vide ou invalide');
+      }
+      if (!reservationData.startAt || reservationData.startAt.trim() === '') {
+        throw new Error('Date de début vide ou invalide');
+      }
+      if (!reservationData.durationMinutes || reservationData.durationMinutes <= 0 || isNaN(reservationData.durationMinutes)) {
+        throw new Error(`Durée invalide: ${reservationData.durationMinutes}`);
+      }
+      if (!reservationData.address || reservationData.address.trim() === '') {
+        throw new Error('Adresse vide ou invalide');
+      }
+      
+      console.log('✅ Toutes les validations passées');
+      
+      // Création d'une pré-réservation avant le paiement
+      console.log('🚀 Création de la pré-réservation:', reservationData);
       
       const response = await reserveParking(reservationData);
-      console.log('✅ Réponse reçue:', response);
+      console.log('✅ Pré-réservation créée:', response);
       
-      setResult(
-        `✅ Réservation confirmée !
-        Numéro: ${response.reservationId}
-        Montant: ${response.amount}€
-        Statut: ${response.status}`
-      );
-      setResultType('success');
+      // Calcul du prix total
+      const totalPrice = calculatePrice(reservationData.durationMinutes);
       
-      // Reset du formulaire après succès
-      setTimeout(() => {
-        setFormData({
-          licencePlate: '',
-          vehicleType: '',
-          startAt: '',
-          durationMinutes: '',
-          address: '',
-          paymentToken: 'demo'
-        });
-        // Remettre la date par défaut
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 30);
-        const formatted = now.toISOString().slice(0, 16);
-        setFormData(prev => ({ ...prev, startAt: formatted }));
-      }, 3000);
+      // Redirection vers la page de paiement avec les détails de la réservation
+      navigate('/payment', { 
+        state: { 
+          reservationData: reservationData,
+          reservationResponse: response,
+          amount: totalPrice,
+          formattedAmount: `${totalPrice}€`
+        } 
+      });
       
     } catch (error) {
       console.error('❌ Erreur lors de la réservation:', error);
@@ -287,6 +381,7 @@ const ParkingReservation = () => {
             value={formData.startAt}
             onChange={handleInputChange}
             className={getValidationClass('startAt')}
+            min={getCurrentDateTime()}
             required
           />
         </div>
@@ -320,6 +415,16 @@ const ParkingReservation = () => {
             <option value="450">7h 30min</option>
             <option value="480">8h</option>
           </select>
+          
+          {/* Informations tarifaires */}
+          <div className="pricing-info">
+            <p className="price-reference">💰 Tarif : 1€50 les 30 minutes</p>
+            {formData.durationMinutes && (
+              <p className="price-calculation">
+                <strong>Prix total : {calculatePrice(formData.durationMinutes)}€</strong>
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Adresse */}
@@ -338,20 +443,6 @@ const ParkingReservation = () => {
             <option value="Parking Souterrain">Parking Souterrain</option>
             <option value="Parking Mairie">Parking Mairie</option>
           </select>
-        </div>
-
-        {/* Token de paiement */}
-        <div className="form-group">
-          <label htmlFor="paymentToken">Token de paiement :</label>
-          <input
-            type="text"
-            id="paymentToken"
-            name="paymentToken"
-            value={formData.paymentToken}
-            onChange={handleInputChange}
-            readOnly
-          />
-          <small>Mode démo - paiement simulé</small>
         </div>
 
         {/* Bouton de soumission */}

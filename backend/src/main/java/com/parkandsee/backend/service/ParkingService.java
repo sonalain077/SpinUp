@@ -5,15 +5,23 @@ import com.parkandsee.backend.dto.PaymentResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.parkandsee.backend.entity.ReservationEntity;
+import com.parkandsee.backend.repository.ReservationRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ParkingService {
 
-    private final Map<String, Reservation> store = new ConcurrentHashMap<>();
+    private final ReservationRepository reservationRepository;
 
+    public ParkingService(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
+
+    @Transactional
     public PaymentResponse reserveAndPay(PaymentRequest request) {
         // Basic validation already handled by @Valid in controller
         // Simulate payment processing
@@ -23,16 +31,16 @@ public class ParkingService {
         }
 
         String id = UUID.randomUUID().toString();
-        Reservation r = new Reservation();
-        r.id = id;
-        r.licencePlate = request.getLicencePlate();
-        r.vehicleType = request.getVehicleType();
-        r.startAt = request.getStartAt();
-        r.durationMinutes = request.getDurationMinutes();
-        r.address = request.getAddress();
-        r.createdAt = LocalDateTime.now();
+        ReservationEntity e = new ReservationEntity();
+        e.setId(id);
+        e.setLicencePlate(request.getLicencePlate());
+        e.setVehicleType(request.getVehicleType());
+        e.setStartAt(request.getStartAt());
+        e.setDurationMinutes(request.getDurationMinutes());
+        e.setAddress(request.getAddress());
+        e.setCreatedAt(LocalDateTime.now());
 
-        store.put(id, r);
+        reservationRepository.save(e);
 
         return new PaymentResponse(true, "Reservation confirmed", id);
     }
@@ -40,16 +48,5 @@ public class ParkingService {
     private boolean simulatePayment(String token) {
         // In real life we'd call a payment gateway. Here, accept any token or null as success for demo.
         return true;
-    }
-
-    // simple inner class to store reservations in memory
-    static class Reservation {
-        String id;
-        String licencePlate;
-        String vehicleType;
-        LocalDateTime startAt;
-        Integer durationMinutes;
-        String address;
-        LocalDateTime createdAt;
     }
 }

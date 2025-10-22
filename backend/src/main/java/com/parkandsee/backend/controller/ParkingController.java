@@ -1,11 +1,17 @@
 package com.parkandsee.backend.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
 import com.parkandsee.backend.service.ParkingService;
+
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/parking")
@@ -37,7 +43,7 @@ public class ParkingController {
         return ResponseEntity.ok("Backend is running!");
     }
     
-    @GetMapping("/status")
+    @GetMapping(value = "/status", produces = "application/json")
     public ResponseEntity<String> status() {
         return ResponseEntity.ok("{\"status\": \"OK\", \"service\": \"Park & See Backend\"}");
     }

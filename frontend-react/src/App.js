@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
 import AgentDashboard from './components/AgentDashboard';
+import Payment from './components/Payment';
+import Confirmation from './components/Confirmation';
 import './App.css';
 
 function App() {
@@ -58,6 +60,9 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/parking-reservation" element={<ParkingReservation />} />
+          <Route path="/reservation" element={<ParkingReservation />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/agent-dashboard" element={<AgentDashboard />} />
         </Routes>
       </div>

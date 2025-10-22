@@ -67,4 +67,12 @@ application-*.yml
 
 # Temporary files
 *.tmp
-*.temp
+*.temp# Maven
+**/target/
+**/maven-status/
+
+# Node (front)
+frontend-react/node_modules/
+
+# Si tu as un package-lock.json à la racine et veux l'ignorer :
+package-lock.json

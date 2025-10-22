@@ -32,7 +32,7 @@ const HomePage = () => {
                   <path d="M20.5899 22C20.5899 18.13 16.7399 15 11.9999 15C7.25991 15 3.40991 18.13 3.40991 22" stroke="#4F46E5" strokeWidth="2"/>
                 </svg>
               </div>
-              <h3>Utilisateur</h3>
+              <h3>Usager</h3>
               <p>Réserver et payer votre place de parking</p>
               <button className="card-button user-button">
                 Accéder
