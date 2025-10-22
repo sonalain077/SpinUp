@@ -62,6 +62,10 @@ const AgentDashboard = () => {
     console.log(`Navigating to zone ${zoneId} details`);
   };
 
+  const handleOverdueControl = () => {
+    navigate('/agent/overdue');
+  };
+
   return (
     <div className="agent-dashboard">
       <div className="dashboard-container">
@@ -180,6 +184,15 @@ const AgentDashboard = () => {
         <div className="quick-actions">
           <h2>Actions rapides</h2>
           <div className="actions-grid">
+            <button className="action-button" onClick={handleOverdueControl}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2"/>
+                <path d="M16 16L12 12" stroke="#EF4444" strokeWidth="2"/>
+              </svg>
+              Contrôle excès temps
+            </button>
+            
             <button className="action-button">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M15 3H6C4.89543 3 4 3.89543 4 5V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V8L15 3Z" stroke="currentColor" strokeWidth="2"/>

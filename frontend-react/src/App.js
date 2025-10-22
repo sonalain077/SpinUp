@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
 import AgentDashboard from './components/AgentDashboard';
+import AgentOverdueControl from './components/AgentOverdueControl';
 import Payment from './components/Payment';
 import Confirmation from './components/Confirmation';
 import './App.css';
@@ -64,6 +65,7 @@ function App() {
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/agent-dashboard" element={<AgentDashboard />} />
+          <Route path="/agent/overdue" element={<AgentOverdueControl />} />
         </Routes>
       </div>
     </Router>

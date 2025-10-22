@@ -2,15 +2,15 @@ package com.parkandsee.backend.service;
 
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import com.parkandsee.backend.entity.ReservationEntity;
+import com.parkandsee.backend.entity.VehicleType;
+import com.parkandsee.backend.entity.ReservationStatus;
 import com.parkandsee.backend.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class ParkingService {
@@ -34,10 +34,11 @@ public class ParkingService {
         ReservationEntity e = new ReservationEntity();
         e.setId(id);
         e.setLicencePlate(request.getLicencePlate());
-        e.setVehicleType(request.getVehicleType());
+        e.setVehicleType(VehicleType.valueOf(request.getVehicleType().toUpperCase()));
         e.setStartAt(request.getStartAt());
         e.setDurationMinutes(request.getDurationMinutes());
         e.setAddress(request.getAddress());
+        e.setStatus(ReservationStatus.ACTIVE);
         e.setCreatedAt(LocalDateTime.now());
 
         reservationRepository.save(e);
