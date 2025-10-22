@@ -36,6 +36,7 @@ public class ReservationEntity {
     @Column(nullable = false)
     private LocalDateTime startAt;
 
+    @NotNull(message = "La durée en minutes est obligatoire")
     @Positive(message = "La durée doit être positive")
     @Column(nullable = false)
     private Integer durationMinutes;
@@ -103,6 +104,11 @@ public class ReservationEntity {
      * @return true si la réservation est en cours
      */
     public boolean isActiveNow() {
+        // Une réservation n'est active que si son statut est ACTIVE
+        if (status != ReservationStatus.ACTIVE) {
+            return false;
+        }
+        
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endAt = getEndAt();
         return startAt != null && endAt != null && 

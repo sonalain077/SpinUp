@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@Transactional
 class ReservationRepositoryTest {
 
     @Autowired
@@ -33,7 +35,6 @@ class ReservationRepositoryTest {
 
         // Réservation active
         activeReservation = new ReservationEntity();
-        activeReservation.setId("active-1");
         activeReservation.setLicencePlate("AB-123-CD");
         activeReservation.setVehicleType(VehicleType.CAR);
         activeReservation.setStartAt(now.minusMinutes(30));
@@ -43,7 +44,6 @@ class ReservationRepositoryTest {
 
         // Réservation en excès
         overdueReservation = new ReservationEntity();
-        overdueReservation.setId("overdue-1");
         overdueReservation.setLicencePlate("EF-456-GH");
         overdueReservation.setVehicleType(VehicleType.MOTORCYCLE);
         overdueReservation.setStartAt(now.minusMinutes(90));
@@ -53,7 +53,6 @@ class ReservationRepositoryTest {
 
         // Réservation terminée
         completedReservation = new ReservationEntity();
-        completedReservation.setId("completed-1");
         completedReservation.setLicencePlate("AB-123-CD");
         completedReservation.setVehicleType(VehicleType.CAR);
         completedReservation.setStartAt(now.minusMinutes(120));
@@ -73,7 +72,8 @@ class ReservationRepositoryTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo("active-1");
+        assertThat(result.get(0).getId()).isNotNull();
+        assertThat(result.get(0).getLicencePlate()).isEqualTo("AB-123-CD");
         assertThat(result.get(0).getStatus()).isEqualTo(ReservationStatus.ACTIVE);
     }
 
@@ -84,7 +84,8 @@ class ReservationRepositoryTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo("overdue-1");
+        assertThat(result.get(0).getId()).isNotNull();
+        assertThat(result.get(0).getLicencePlate()).isEqualTo("EF-456-GH");
         assertThat(result.get(0).getStatus()).isEqualTo(ReservationStatus.OVERDUE);
     }
 
@@ -95,7 +96,7 @@ class ReservationRepositoryTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo("completed-1");
+        assertThat(result.get(0).getId()).isNotNull();
         assertThat(result.get(0).getStatus()).isEqualTo(ReservationStatus.COMPLETED);
     }
 
@@ -118,7 +119,7 @@ class ReservationRepositoryTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo("active-1");
+        assertThat(result.get(0).getId()).isNotNull();
         assertThat(result.get(0).getLicencePlate()).isEqualTo("AB-123-CD");
         assertThat(result.get(0).getStatus()).isEqualTo(ReservationStatus.ACTIVE);
     }

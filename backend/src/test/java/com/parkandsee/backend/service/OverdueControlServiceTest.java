@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -122,26 +121,26 @@ class OverdueControlServiceTest {
                 .thenReturn(overdueReservation);
 
         // When
-        boolean result = overdueControlService.markAsOverdue("reservation-2");
+        ReservationEntity result = overdueControlService.markAsOverdue("reservation-2");
 
         // Then
-        assertThat(result).isTrue();
+        assertThat(result).isNotNull();
         assertThat(overdueReservation.getStatus()).isEqualTo(ReservationStatus.OVERDUE);
         verify(reservationRepository).findById("reservation-2");
         verify(reservationRepository).save(overdueReservation);
     }
 
     @Test
-    void markAsOverdue_withNonExistingReservation_returnsFalse() {
+    void markAsOverdue_withNonExistingReservation_returnsNull() {
         // Given
         when(reservationRepository.findById("nonexistent"))
                 .thenReturn(Optional.empty());
 
         // When
-        boolean result = overdueControlService.markAsOverdue("nonexistent");
+        ReservationEntity result = overdueControlService.markAsOverdue("nonexistent");
 
         // Then
-        assertThat(result).isFalse();
+        assertThat(result).isNull();
         verify(reservationRepository).findById("nonexistent");
         verify(reservationRepository, never()).save(any(ReservationEntity.class));
     }
@@ -155,13 +154,13 @@ class OverdueControlServiceTest {
                 .thenReturn(Arrays.asList(completedReservation));
 
         // When
-        Map<String, Object> stats = overdueControlService.getOverdueStats();
+        OverdueControlService.OverdueStats stats = overdueControlService.getOverdueStats();
 
         // Then
-        assertThat(stats).containsEntry("totalActive", 2);
-        assertThat(stats).containsEntry("currentOverdue", 1);
-        assertThat(stats).containsEntry("markedOverdue", 1);
-        assertThat(stats).containsKey("timestamp");
+        assertThat(stats.getTotalActive()).isEqualTo(2);
+        assertThat(stats.getCurrentOverdue()).isEqualTo(1);
+        assertThat(stats.getMarkedOverdue()).isEqualTo(1);
+        assertThat(stats.getTimestamp()).isNotNull();
         
         verify(reservationRepository).findByStatus(ReservationStatus.ACTIVE);
         verify(reservationRepository).findByStatus(ReservationStatus.OVERDUE);
@@ -176,12 +175,12 @@ class OverdueControlServiceTest {
                 .thenReturn(Arrays.asList());
 
         // When
-        Map<String, Object> stats = overdueControlService.getOverdueStats();
+        OverdueControlService.OverdueStats stats = overdueControlService.getOverdueStats();
 
         // Then
-        assertThat(stats).containsEntry("totalActive", 0);
-        assertThat(stats).containsEntry("currentOverdue", 0);
-        assertThat(stats).containsEntry("markedOverdue", 0);
-        assertThat(stats).containsKey("timestamp");
+        assertThat(stats.getTotalActive()).isEqualTo(0);
+        assertThat(stats.getCurrentOverdue()).isEqualTo(0);
+        assertThat(stats.getMarkedOverdue()).isEqualTo(0);
+        assertThat(stats.getTimestamp()).isNotNull();
     }
 }

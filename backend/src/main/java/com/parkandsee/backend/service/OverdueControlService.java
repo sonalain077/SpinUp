@@ -47,18 +47,15 @@ public class OverdueControlService {
     /**
      * Marque une réservation comme étant en dépassement
      * @param reservationId ID de la réservation
-     * @return La réservation mise à jour
+     * @return La réservation mise à jour, ou null si non trouvée
      */
     public ReservationEntity markAsOverdue(String reservationId) {
-        ReservationEntity reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée: " + reservationId));
-        
-        if (reservation.isOverdue()) {
-            reservation.setStatus(ReservationStatus.OVERDUE);
-            return reservationRepository.save(reservation);
-        }
-        
-        throw new RuntimeException("La réservation n'est pas en excès de temps");
+        return reservationRepository.findById(reservationId)
+                .map(reservation -> {
+                    reservation.setStatus(ReservationStatus.OVERDUE);
+                    return reservationRepository.save(reservation);
+                })
+                .orElse(null);
     }
 
     /**
@@ -81,33 +78,44 @@ public class OverdueControlService {
      * @return Informations sur les excès actuels
      */
     public OverdueStats getOverdueStats() {
-        List<ReservationEntity> overdueReservations = findAllOverdueReservations();
+        // Récupérer toutes les réservations actives
+        List<ReservationEntity> activeReservations = reservationRepository.findByStatus(ReservationStatus.ACTIVE);
         
-        long totalOverdue = overdueReservations.size();
-        double averageOverdueMinutes = overdueReservations.stream()
-                .mapToLong(ReservationEntity::getOverdueMinutes)
-                .average()
-                .orElse(0.0);
+        // Compter celles qui sont en dépassement
+        long currentOverdue = activeReservations.stream()
+                .filter(ReservationEntity::isOverdue)
+                .count();
         
-        return new OverdueStats(totalOverdue, averageOverdueMinutes, LocalDateTime.now());
+        // Récupérer les réservations déjà marquées comme OVERDUE
+        long markedOverdue = reservationRepository.findByStatus(ReservationStatus.OVERDUE).size();
+        
+        return new OverdueStats(
+            activeReservations.size(),
+            currentOverdue,
+            markedOverdue,
+            LocalDateTime.now()
+        );
     }
 
     /**
      * Classe pour les statistiques des excès de temps
      */
     public static class OverdueStats {
-        private final long totalOverdueReservations;
-        private final double averageOverdueMinutes;
-        private final LocalDateTime calculatedAt;
+        private final long totalActive;
+        private final long currentOverdue;
+        private final long markedOverdue;
+        private final LocalDateTime timestamp;
 
-        public OverdueStats(long totalOverdueReservations, double averageOverdueMinutes, LocalDateTime calculatedAt) {
-            this.totalOverdueReservations = totalOverdueReservations;
-            this.averageOverdueMinutes = averageOverdueMinutes;
-            this.calculatedAt = calculatedAt;
+        public OverdueStats(long totalActive, long currentOverdue, long markedOverdue, LocalDateTime timestamp) {
+            this.totalActive = totalActive;
+            this.currentOverdue = currentOverdue;
+            this.markedOverdue = markedOverdue;
+            this.timestamp = timestamp;
         }
 
-        public long getTotalOverdueReservations() { return totalOverdueReservations; }
-        public double getAverageOverdueMinutes() { return averageOverdueMinutes; }
-        public LocalDateTime getCalculatedAt() { return calculatedAt; }
+        public long getTotalActive() { return totalActive; }
+        public long getCurrentOverdue() { return currentOverdue; }
+        public long getMarkedOverdue() { return markedOverdue; }
+        public LocalDateTime getTimestamp() { return timestamp; }
     }
 }

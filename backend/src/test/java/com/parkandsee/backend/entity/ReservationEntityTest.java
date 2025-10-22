@@ -60,7 +60,7 @@ class ReservationEntityTest {
     @Test
     void setAndGetVehicleType_ShouldWorkCorrectly() {
         // Given
-        String vehicleType = "voiture";
+        VehicleType vehicleType = VehicleType.CAR;
 
         // When
         reservationEntity.setVehicleType(vehicleType);
@@ -116,7 +116,7 @@ class ReservationEntityTest {
         // Given
         String id = "complete-test-id";
         String licencePlate = "XY-789-ZW";
-        String vehicleType = "moto";
+        VehicleType vehicleType = VehicleType.MOTORCYCLE;
         LocalDateTime startAt = LocalDateTime.now().plusHours(2);
         Integer duration = 180;
         String address = "456 Complete Street";
@@ -181,18 +181,16 @@ class ReservationEntityTest {
     }
 
     @Test
-    void setVehicleType_ShouldAcceptDifferentTypes() {
+    void setVehicleType_ShouldAcceptDifferentVehicleTypes() {
         // Given
-        String[] types = {
-            "voiture",
-            "moto",
-            "camion",
-            "vélo électrique",
-            "scooter",
-            "bus"
+        VehicleType[] types = {
+            VehicleType.CAR,
+            VehicleType.MOTORCYCLE,
+            VehicleType.BICYCLE,
+            VehicleType.ELECTRIC_SCOOTER
         };
 
-        for (String type : types) {
+        for (VehicleType type : types) {
             // When
             reservationEntity.setVehicleType(type);
 
@@ -306,7 +304,7 @@ class ReservationEntityTest {
         // Given - Simulate a real parking reservation
         String id = "550e8400-e29b-41d4-a716-446655440000";
         String licencePlate = "AB-123-CD";
-        String vehicleType = "voiture";
+        VehicleType vehicleType = VehicleType.CAR;
         LocalDateTime startAt = LocalDateTime.of(2024, 10, 13, 16, 0, 0);
         Integer duration = 120; // 2 hours
         String address = "Place de la République, 75011 Paris";

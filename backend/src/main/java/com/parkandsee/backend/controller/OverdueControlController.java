@@ -46,15 +46,16 @@ public class OverdueControlController {
      * Marque une réservation comme étant en dépassement
      */
     @PostMapping("/{reservationId}/mark")
-    public ResponseEntity<ReservationEntity> markReservationAsOverdue(
+    public ResponseEntity<?> markReservationAsOverdue(
             @PathVariable String reservationId) {
-        try {
-            ReservationEntity updatedReservation = 
-                    overdueControlService.markAsOverdue(reservationId);
-            return ResponseEntity.ok(updatedReservation);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+        ReservationEntity updatedReservation = overdueControlService.markAsOverdue(reservationId);
+        
+        if (updatedReservation == null) {
+            return ResponseEntity.status(404)
+                    .body(new MarkResponse(false, "Réservation non trouvée"));
         }
+        
+        return ResponseEntity.ok(new MarkResponse(true, "Réservation marquée en excès"));
     }
 
     /**
@@ -89,6 +90,27 @@ public class OverdueControlController {
 
         public int getUpdatedReservationsCount() {
             return updatedReservationsCount;
+        }
+    }
+
+    /**
+     * Classe pour la réponse de marquage d'une réservation
+     */
+    public static class MarkResponse {
+        private final boolean success;
+        private final String message;
+
+        public MarkResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
         }
     }
 }
