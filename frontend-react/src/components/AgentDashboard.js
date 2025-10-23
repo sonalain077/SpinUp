@@ -57,6 +57,15 @@ const AgentDashboard = () => {
     navigate('/');
   };
 
+  const handleLogout = () => {
+    // Clear auth tokens and role
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    navigate('/');
+  };
+
   const handleZoneDetails = (zoneId) => {
     // Navigation vers les détails d'une zone (à implémenter)
     console.log(`Navigating to zone ${zoneId} details`);
@@ -70,9 +79,10 @@ const AgentDashboard = () => {
             <h1>Dashboard Agent</h1>
             <p>Contrôle en temps réel du stationnement</p>
           </div>
-          <button onClick={handleBackToHome} className="back-button">
-            ← Retour
-          </button>
+          <div className="header-actions">
+            <button onClick={handleBackToHome} className="back-button">← Retour</button>
+            <button onClick={handleLogout} className="logout-button">Se déconnecter</button>
+          </div>
         </header>
 
         {/* Statistiques générales */}

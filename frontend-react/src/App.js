@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
 import AgentDashboard from './components/AgentDashboard';
+import Login from './components/Login';
+import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
 function App() {
@@ -58,7 +60,15 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/parking-reservation" element={<ParkingReservation />} />
-          <Route path="/agent-dashboard" element={<AgentDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/agent-dashboard"
+            element={
+              <PrivateRoute roleRequired={'agent'}>
+                <AgentDashboard />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </div>
     </Router>

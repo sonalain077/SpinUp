@@ -1,6 +1,12 @@
 com\parkandsee\backend\dto\PaymentResponse.class
-com\parkandsee\backend\controller\ParkingController.class
-com\parkandsee\backend\service\ParkingService$Reservation.class
+com\parkandsee\backend\controller\AuthController.class
+com\parkandsee\backend\security\AuthRequest.class
+com\parkandsee\backend\security\SecurityConfig.class
 com\parkandsee\backend\BackendApplication.class
+com\parkandsee\backend\security\DemoUserService.class
+com\parkandsee\backend\security\JwtUtils.class
+com\parkandsee\backend\controller\ParkingController.class
+com\parkandsee\backend\security\AuthResponse.class
+com\parkandsee\backend\service\ParkingService$Reservation.class
 com\parkandsee\backend\service\ParkingService.class
 com\parkandsee\backend\dto\PaymentRequest.class
