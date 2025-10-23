@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
 import com.parkandsee.backend.entity.ReservationEntity;
+import com.parkandsee.backend.entity.VehicleType;
 import com.parkandsee.backend.repository.ReservationRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +42,7 @@ class ParkingServiceTest {
         // Setup valid payment request
         validRequest = new PaymentRequest();
         validRequest.setLicencePlate("AB-123-CD");
-        validRequest.setVehicleType("voiture");
+        validRequest.setVehicleType("CAR");
         validRequest.setStartAt(LocalDateTime.now().plusHours(1));
         validRequest.setDurationMinutes(60);
         validRequest.setAddress("123 Test Street");
@@ -51,7 +52,7 @@ class ParkingServiceTest {
         savedEntity = new ReservationEntity();
         savedEntity.setId("test-reservation-id");
         savedEntity.setLicencePlate("AB-123-CD");
-        savedEntity.setVehicleType("voiture");
+        savedEntity.setVehicleType(VehicleType.CAR);
         savedEntity.setStartAt(validRequest.getStartAt());
         savedEntity.setDurationMinutes(60);
         savedEntity.setAddress("123 Test Street");
@@ -104,7 +105,7 @@ class ParkingServiceTest {
 
         assertNotNull(capturedEntity.getId());
         assertEquals("AB-123-CD", capturedEntity.getLicencePlate());
-        assertEquals("voiture", capturedEntity.getVehicleType());
+        assertEquals(VehicleType.CAR, capturedEntity.getVehicleType());
         assertEquals(validRequest.getStartAt(), capturedEntity.getStartAt());
         assertEquals(60, capturedEntity.getDurationMinutes());
         assertEquals("123 Test Street", capturedEntity.getAddress());

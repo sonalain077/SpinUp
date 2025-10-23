@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
 import AgentDashboard from './components/AgentDashboard';
+import AgentOverdueControl from './components/AgentOverdueControl';
 import Payment from './components/Payment';
 import Confirmation from './components/Confirmation';
 import Login from './components/Login';
@@ -74,6 +75,7 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="/agent/overdue" element={<AgentOverdueControl />} />
           <Route path="/agent" element={<Login />} />
         </Routes>
       </div>
