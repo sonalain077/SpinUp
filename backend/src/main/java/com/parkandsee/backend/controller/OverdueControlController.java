@@ -79,6 +79,50 @@ public class OverdueControlController {
     }
 
     /**
+     * GET /api/agent/occupation
+     * Récupère les statistiques d'occupation en temps réel
+     */
+    @GetMapping("/occupation")
+    public ResponseEntity<OccupationStats> getOccupationStats() {
+        OccupationStats stats = overdueControlService.getOccupationStats();
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Classe pour les statistiques d'occupation
+     */
+    public static class OccupationStats {
+        private final int totalActive;
+        private final int totalCapacity;
+        private final double occupationRate;
+        private final int availablePlaces;
+
+        public OccupationStats(int totalActive, int totalCapacity) {
+            this.totalActive = totalActive;
+            this.totalCapacity = totalCapacity;
+            this.availablePlaces = totalCapacity - totalActive;
+            this.occupationRate = totalCapacity > 0 ? 
+                (double) totalActive / totalCapacity * 100 : 0;
+        }
+
+        public int getTotalActive() {
+            return totalActive;
+        }
+
+        public int getTotalCapacity() {
+            return totalCapacity;
+        }
+
+        public double getOccupationRate() {
+            return occupationRate;
+        }
+
+        public int getAvailablePlaces() {
+            return availablePlaces;
+        }
+    }
+
+    /**
      * Classe pour la réponse de mise à jour en masse
      */
     public static class UpdateAllResponse {

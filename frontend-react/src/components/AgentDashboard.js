@@ -9,6 +9,12 @@ const AgentDashboard = () => {
     currentOverdue: 0,
     markedOverdue: 0
   });
+  const [occupation, setOccupation] = useState({
+    totalActive: 0,
+    totalCapacity: 100,
+    occupationRate: 0,
+    availablePlaces: 100
+  });
   const [overdueReservations, setOverdueReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
@@ -31,9 +37,10 @@ const AgentDashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [overdueRes, statsRes] = await Promise.all([
+      const [overdueRes, statsRes, occupationRes] = await Promise.all([
         fetch(`${API_BASE_URL}/agent/overdue`),
-        fetch(`${API_BASE_URL}/agent/overdue/stats`)
+        fetch(`${API_BASE_URL}/agent/overdue/stats`),
+        fetch(`${API_BASE_URL}/agent/overdue/occupation`)
       ]);
 
       if (overdueRes.ok && statsRes.ok) {
@@ -46,6 +53,11 @@ const AgentDashboard = () => {
           markedOverdue: statsData.markedOverdue || 0
         });
         calculateAnalytics(overdueData);
+      }
+
+      if (occupationRes.ok) {
+        const occupationData = await occupationRes.json();
+        setOccupation(occupationData);
       }
     } catch (error) {
       console.error('❌ Erreur chargement:', error);
@@ -202,6 +214,25 @@ const AgentDashboard = () => {
 
           {/* Stats cards */}
           <div className="stats-grid">
+            <div className="stat-card occupation-card">
+              <div className="stat-number">
+                {loading ? '...' : `${occupation.totalActive}/${occupation.totalCapacity}`}
+              </div>
+              <div className="stat-label">Places occupées</div>
+              <div className="occupation-bar">
+                <div 
+                  className="occupation-fill" 
+                  style={{ width: `${occupation.occupationRate}%` }}
+                ></div>
+              </div>
+              <div className="occupation-percentage">
+                {occupation.occupationRate.toFixed(1)}% d'occupation
+              </div>
+            </div>
+            <div className="stat-card available-card">
+              <div className="stat-number">{loading ? '...' : occupation.availablePlaces}</div>
+              <div className="stat-label">Places disponibles</div>
+            </div>
             <div className="stat-card current-overdue">
               <div className="stat-number">{loading ? '...' : stats.currentOverdue}</div>
               <div className="stat-label">En excès maintenant</div>

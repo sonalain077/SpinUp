@@ -98,6 +98,20 @@ public class OverdueControlService {
     }
 
     /**
+     * Récupère les statistiques d'occupation en temps réel
+     */
+    public OverdueControlController.OccupationStats getOccupationStats() {
+        // Capacité totale du parking (peut être configurée)
+        final int TOTAL_CAPACITY = 100;
+        
+        // Compter les réservations actives (non complétées, non annulées)
+        long totalActive = reservationRepository.countByStatus(ReservationStatus.ACTIVE) +
+                          reservationRepository.countByStatus(ReservationStatus.OVERDUE);
+        
+        return new OverdueControlController.OccupationStats((int) totalActive, TOTAL_CAPACITY);
+    }
+
+    /**
      * Classe pour les statistiques des excès de temps
      */
     public static class OverdueStats {

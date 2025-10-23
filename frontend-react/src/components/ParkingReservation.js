@@ -364,10 +364,10 @@ const ParkingReservation = () => {
             required
           >
             <option value="">-- Sélectionnez un type de véhicule --</option>
-            <option value="2_roues">2 roues (moto, scooter)</option>
-            <option value="voiture">Voiture</option>
-            <option value="camionnette">Camionnette</option>
-            <option value="camion">Camion</option>
+            <option value="MOTORCYCLE">2 roues (moto, scooter)</option>
+            <option value="CAR">Voiture</option>
+            <option value="VAN">Camionnette</option>
+            <option value="TRUCK">Camion</option>
           </select>
         </div>
 
