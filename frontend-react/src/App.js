@@ -5,6 +5,8 @@ import ParkingReservation from './components/ParkingReservation';
 import AgentDashboard from './components/AgentDashboard';
 import Payment from './components/Payment';
 import Confirmation from './components/Confirmation';
+import Login from './components/Login';
+import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
 function App() {
@@ -63,7 +65,16 @@ function App() {
           <Route path="/reservation" element={<ParkingReservation />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirmation" element={<Confirmation />} />
-          <Route path="/agent-dashboard" element={<AgentDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/agent-dashboard"
+            element={
+              <PrivateRoute roleRequired={'agent'}>
+                <AgentDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/agent" element={<Login />} />
         </Routes>
       </div>
     </Router>
