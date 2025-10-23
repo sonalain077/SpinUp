@@ -1,7 +1,7 @@
-version: '3.8'
 services:
   db:
     image: postgres:15
+    container_name: parkandsee-db
     environment:
       POSTGRES_DB: parkandsee
       POSTGRES_USER: postgres
@@ -10,6 +10,35 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parkandsee-backend
+    environment:
+      # Configuration PostgreSQL
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/parkandsee
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: example
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      # Configuration JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
+      # Port
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   db_data:
