@@ -1,20 +1,22 @@
 # SpinUp - Script d'arrêt
 # Arrête tous les services de l'application
+# Exécuter depuis le dossier scripts/ : .\stop-app.ps1
 
 Write-Host "🛑 SpinUp - Arrêt de l'application" -ForegroundColor Red
 
-$PROJECT_ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Répertoire racine du projet (parent du dossier scripts)
+$PROJECT_ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 # Arrêter les processus Java (Backend)
 Write-Host "⚙️ Arrêt du Backend..." -ForegroundColor Yellow
-$javaProcesses = Get-Process -Name "java" -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*spring-boot*" -or $_.ProcessName -eq "java" }
+$javaProcesses = Get-Process -Name "java" -ErrorAction SilentlyContinue
 foreach ($process in $javaProcesses) {
     try {
-        # Vérifier si c'est bien notre backend sur le port 8081
-        $connections = Get-NetTCPConnection -OwningProcess $process.Id -LocalPort 8081 -ErrorAction SilentlyContinue
+        # Vérifier si c'est bien notre backend (ports 8081-8090)
+        $connections = Get-NetTCPConnection -OwningProcess $process.Id -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -ge 8081 -and $_.LocalPort -le 8090 }
         if ($connections) {
             Stop-Process -Id $process.Id -Force
-            Write-Host "  ✅ Backend arrêté (PID: $($process.Id))" -ForegroundColor Green
+            Write-Host "  ✅ Backend arrêté (PID: $($process.Id), Port: $($connections[0].LocalPort))" -ForegroundColor Green
         }
     }
     catch {
@@ -47,23 +49,25 @@ try {
     Write-Host "  ✅ Conteneurs Docker arrêtés" -ForegroundColor Green
 }
 catch {
-    Write-Host "  ⚠️ Erreur lors de l'arrêt des conteneurs" -ForegroundColor Yellow
+    Write-Host "  ⚠️ Erreur lors de l'arrêt des conteneurs Docker" -ForegroundColor Yellow
 }
 
-# Force kill des processus sur les ports si nécessaire
-Write-Host "🔍 Vérification des ports..." -ForegroundColor Yellow
+# Nettoyage final des ports
+Write-Host "🔍 Nettoyage final des ports..." -ForegroundColor Yellow
 
-# Port 8081 (Backend)
-try {
-    $process8081 = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($process8081) {
-        Stop-Process -Id $process8081.OwningProcess -Force -ErrorAction SilentlyContinue
-        Write-Host "  ✅ Processus sur port 8081 arrêté" -ForegroundColor Green
+# Ports Backend (8081-8090)
+for ($port = 8081; $port -le 8090; $port++) {
+    try {
+        $processPort = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($processPort) {
+            Stop-Process -Id $processPort.OwningProcess -Force -ErrorAction SilentlyContinue
+            Write-Host "  ✅ Processus sur port $port arrêté" -ForegroundColor Green
+        }
     }
+    catch { }
 }
-catch { }
 
-# Port 3000 (Frontend)
+# Port Frontend (3000)
 try {
     $process3000 = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($process3000) {
@@ -73,5 +77,6 @@ try {
 }
 catch { }
 
-Write-Host "`n✅ Application SpinUp arrêtée" -ForegroundColor Green
+Write-Host "`n✅ Application SpinUp complètement arrêtée" -ForegroundColor Green
+Write-Host "📂 Tous les scripts sont dans le dossier scripts/" -ForegroundColor Cyan
 Write-Host "👋 À bientôt!" -ForegroundColor Cyan
