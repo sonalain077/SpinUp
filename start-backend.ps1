@@ -7,7 +7,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Liste de chemins Java 17 possibles (communes + utilisateur local)
+$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $possibleJavaHomes = @(
+    "C:\Program Files\Microsoft\jdk-17.0.16.8-hotspot",
     "$env:USERPROFILE\tools\jdk-17.0.12+7",
     "C:\Program Files\Java\jdk-17",
     "C:\Program Files\Eclipse Adoptium\jdk-17",
@@ -18,6 +20,7 @@ $possibleJavaHomes = @(
 
 # Liste de chemins Maven possibles
 $possibleMavenHomes = @(
+    "$projectRoot\apache-maven-3.9.6",
     "$env:USERPROFILE\tools\apache-maven-3.9.9",
     "C:\Program Files\Apache\Maven",
     "C:\Program Files\Apache\apache-maven",

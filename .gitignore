@@ -76,3 +76,5 @@ frontend-react/node_modules/
 
 # Si tu as un package-lock.json à la racine et veux l'ignorer :
 package-lock.json
+
+apache-maven-3.9.6/
