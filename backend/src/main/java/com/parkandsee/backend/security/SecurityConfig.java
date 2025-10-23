@@ -21,7 +21,8 @@ public class SecurityConfig {
             .and()
             .authorizeHttpRequests()
             .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/parking/**").permitAll()
+            .requestMatchers("/api/parking/**").permitAll()
+            .requestMatchers("/api/agent/**").permitAll()
             .anyRequest().authenticated();
 
         return http.build();
