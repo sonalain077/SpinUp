@@ -6,25 +6,88 @@ Write-Host "  DÉMARRAGE BACKEND PARK & SEE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Vérifier que Java est disponible
-try {
-    $javaVersion = java -version 2>&1 | Select-Object -First 1
-    Write-Host "✅ Java détecté : $javaVersion" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Java non trouvé !" -ForegroundColor Red
-    Write-Host "   Installez Java 17 JDK et ajoutez-le au PATH" -ForegroundColor Yellow
+# Liste de chemins Java 17 possibles (communes + utilisateur local)
+$possibleJavaHomes = @(
+    "$env:USERPROFILE\tools\jdk-17.0.12+7",
+    "C:\Program Files\Java\jdk-17",
+    "C:\Program Files\Eclipse Adoptium\jdk-17",
+    "C:\Program Files\Java\jdk-17.0.12",
+    "C:\tools\jdk-17",
+    "$env:JAVA_HOME"
+)
+
+# Liste de chemins Maven possibles
+$possibleMavenHomes = @(
+    "$env:USERPROFILE\tools\apache-maven-3.9.9",
+    "C:\Program Files\Apache\Maven",
+    "C:\Program Files\Apache\apache-maven",
+    "C:\tools\apache-maven",
+    "C:\maven"
+)
+
+# Chercher Java 17
+$javaFound = $false
+$javaCmd = $null
+$javaHome = $null
+
+foreach ($javaPath in $possibleJavaHomes) {
+    if ($javaPath -and (Test-Path "$javaPath\bin\java.exe")) {
+        # Vérifier la version
+        $versionOutput = & "$javaPath\bin\java.exe" -version 2>&1 | Select-Object -First 1
+        if ($versionOutput -match "17") {
+            $javaCmd = "$javaPath\bin\java.exe"
+            $javaHome = $javaPath
+            $javaFound = $true
+            Write-Host "✅ Java 17 trouvé : $javaPath" -ForegroundColor Green
+            break
+        }
+    }
+}
+
+if (-not $javaFound) {
+    Write-Host "❌ Java 17 JDK introuvable !" -ForegroundColor Red
+    Write-Host "   Vérifiez que Java 17 est installé dans un des emplacements:" -ForegroundColor Yellow
+    Write-Host "   - $env:USERPROFILE\tools\jdk-17.x" -ForegroundColor Yellow
+    Write-Host "   - C:\Program Files\Java\jdk-17" -ForegroundColor Yellow
+    Write-Host "   - C:\Program Files\Eclipse Adoptium\jdk-17" -ForegroundColor Yellow
     exit 1
 }
 
-# Vérifier que Maven est disponible
+# Chercher Maven
+$mavenFound = $false
+$mavenCmd = $null
+
+# D'abord vérifier si mvn est dans le PATH
 try {
-    $mavenVersion = mvn -version 2>&1 | Select-Object -First 1
-    Write-Host "✅ Maven détecté : $mavenVersion" -ForegroundColor Green
+    $null = mvn -version 2>&1
+    $mavenCmd = "mvn"
+    $mavenFound = $true
+    Write-Host "✅ Maven trouvé dans le PATH" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Maven non trouvé !" -ForegroundColor Red
-    Write-Host "   Installez Maven et ajoutez-le au PATH" -ForegroundColor Yellow
+    # Chercher dans les emplacements locaux
+    foreach ($mavenPath in $possibleMavenHomes) {
+        if ($mavenPath -and (Test-Path "$mavenPath\bin\mvn.cmd")) {
+            $mavenCmd = "$mavenPath\bin\mvn.cmd"
+            $mavenFound = $true
+            Write-Host "✅ Maven trouvé : $mavenPath" -ForegroundColor Green
+            break
+        }
+    }
+}
+
+if (-not $mavenFound) {
+    Write-Host "❌ Maven introuvable !" -ForegroundColor Red
+    Write-Host "   Installez Maven ou ajoutez-le au PATH" -ForegroundColor Yellow
+    Write-Host "   Emplacements vérifiés:" -ForegroundColor Yellow
+    foreach ($path in $possibleMavenHomes) {
+        Write-Host "   - $path" -ForegroundColor Yellow
+    }
     exit 1
 }
+
+# Configurer JAVA_HOME pour Maven
+$env:JAVA_HOME = $javaHome
+$env:PATH = "$javaHome\bin;$env:PATH"
 
 Write-Host ""
 
@@ -36,4 +99,4 @@ Write-Host "   Appuyez sur Ctrl+C pour arrêter" -ForegroundColor Magenta
 Write-Host ""
 
 # Lancer Spring Boot
-mvn spring-boot:run "-Dmaven.test.skip=true"
+& $mavenCmd spring-boot:run "-Dmaven.test.skip=true"
