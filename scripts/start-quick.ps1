@@ -1,9 +1,11 @@
 # SpinUp - Script de démarrage rapide
 # Version simplifiée pour développement quotidien
+# Exécuter depuis le dossier scripts/ : .\start-quick.ps1
 
 Write-Host "🚀 SpinUp - Démarrage rapide" -ForegroundColor Green
 
-$PROJECT_ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Répertoire racine du projet (parent du dossier scripts)
+$PROJECT_ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 # Fonction pour vérifier si un port est utilisé
 function Test-Port {
@@ -23,6 +25,13 @@ function Find-FreePort {
         }
     }
     return $port
+}
+
+# Vérifier que nous sommes dans le bon répertoire
+if (-not (Test-Path "$PROJECT_ROOT\docker-compose.yml")) {
+    Write-Host "❌ Erreur: docker-compose.yml non trouvé dans $PROJECT_ROOT" -ForegroundColor Red
+    Write-Host "💡 Assurez-vous d'exécuter ce script depuis le dossier scripts/" -ForegroundColor Yellow
+    exit 1
 }
 
 # 1. Démarrer Postgres
@@ -48,7 +57,7 @@ $env:SERVER_PORT = $backendPort
 Set-Location "$PROJECT_ROOT\backend"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "mvn spring-boot:run -Dspring-boot.run.jvmArguments='-Dserver.port=$backendPort'" -WindowStyle Minimized
 
-# 3. Démarrer Frontend (en arrière-plan)  
+# 4. Démarrer Frontend (en arrière-plan)  
 Write-Host "🎨 Démarrage Frontend..." -ForegroundColor Cyan
 Set-Location "$PROJECT_ROOT\frontend-react"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm start" -WindowStyle Minimized
@@ -62,4 +71,5 @@ if ($backendPort -ne 8081) {
     Write-Host "💡 Mettez à jour vos appels API frontend si nécessaire" -ForegroundColor Yellow
 }
 
-Write-Host "`n💡 Utilisez stop-app.ps1 pour arrêter l'application" -ForegroundColor Yellow
+Write-Host "`n💡 Utilisez .\stop-app.ps1 pour arrêter l'application" -ForegroundColor Yellow
+Write-Host "📂 Tous les scripts sont dans le dossier scripts/" -ForegroundColor Cyan

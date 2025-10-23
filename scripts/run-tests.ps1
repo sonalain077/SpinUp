@@ -1,4 +1,4 @@
-# Script PowerShell pour lancer les tests unitaires du projet SpinUp
+# Script PowerShell complet pour lancer les tests unitaires du projet SpinUp
 param(
     [string]$TestClass = "",
     [string]$TestMethod = "",
@@ -19,16 +19,23 @@ $errorColor = "Red"
 $infoColor = "Cyan"
 $warningColor = "Yellow"
 
-# Verifier que nous sommes dans le bon repertoire
-if (-not (Test-Path "backend\pom.xml")) {
-    Write-Host "❌ Erreur: Veuillez executer ce script depuis le repertoire racine du projet SpinUp" -ForegroundColor $errorColor
+# Déterminer le répertoire racine du projet (deux niveaux au-dessus)
+$PROJECT_ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$BACKEND_DIR = Join-Path $PROJECT_ROOT "backend"
+
+# Vérifier que nous avons accès au backend
+if (-not (Test-Path (Join-Path $BACKEND_DIR "pom.xml"))) {
+    Write-Host "❌ Erreur: Impossible de trouver le fichier pom.xml dans $BACKEND_DIR" -ForegroundColor $errorColor
+    Write-Host "Répertoire racine du projet: $PROJECT_ROOT" -ForegroundColor $warningColor
     exit 1
 }
 
 # Aller dans le dossier backend
-Push-Location "backend"
+Push-Location $BACKEND_DIR
 
 try {
+    Write-Host "📂 Répertoire de travail: $BACKEND_DIR" -ForegroundColor $infoColor
+    
     # Construction de la commande Maven
     $mavenCommand = "mvn test"
     
@@ -157,14 +164,14 @@ try {
     Write-Host "   .\run-tests.ps1 -TestClass ParkingControllerTest" -ForegroundColor $warningColor
     Write-Host "   .\run-tests.ps1 -Coverage          # Avec couverture de code" -ForegroundColor $warningColor
 
+    # Sortie avec le code d'erreur approprié
+    exit $exitCode
+
 } catch {
     Write-Host "❌ Erreur lors de l'exécution des tests:" -ForegroundColor $errorColor
     Write-Host $_.Exception.Message -ForegroundColor $errorColor
-    $exitCode = 1
+    exit 1
 } finally {
     # Retour au répertoire initial
     Pop-Location
 }
-
-# Sortie avec le code d'erreur approprié
-exit $exitCode
