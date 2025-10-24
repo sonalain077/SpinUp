@@ -7,7 +7,9 @@ public enum ReservationStatus {
     ACTIVE("Active"),
     COMPLETED("Terminée"),
     CANCELLED("Annulée"),
-    OVERDUE("En dépassement");
+    OVERDUE("En dépassement"),
+    SIGNALE("Signalé"),
+    REGULARISE("Régularisé");
 
     private final String displayName;
 

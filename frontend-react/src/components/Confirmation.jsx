@@ -1,5 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getVehicleTypeLabel } from '../lib/vehicleTypes';
 import './Confirmation.css';
 
 const Confirmation = () => {
@@ -20,7 +21,7 @@ const Confirmation = () => {
       case 'lydia':
         return '📱 Lydia';
       case 'paypal':
-        return '🌐 PayPal';
+        return '💰 PayPal';
       default:
         return '💳 Non spécifié';
     }
@@ -74,12 +75,12 @@ const Confirmation = () => {
                 </div>
 
                 <div className="info-item">
-                  <span className="info-label">🏷️ Type :</span>
-                  <span className="info-value">{reservationData.vehicleType}</span>
+                  <span className="info-label">🚙 Type :</span>
+                  <span className="info-value">{getVehicleTypeLabel(reservationData.vehicleType)}</span>
                 </div>
 
                 <div className="info-item">
-                  <span className="info-label">📍 Parking :</span>
+                  <span className="info-label">🏢 Parking :</span>
                   <span className="info-value">{reservationData.address}</span>
                 </div>
 
@@ -120,7 +121,7 @@ const Confirmation = () => {
               <h4>⚠️ Informations importantes</h4>
               <ul>
                 <li>📱 Conservez votre numéro de réservation : <strong>{reservationResponse?.reservationId || 'R-' + Date.now()}</strong></li>
-                <li>🎫 Une confirmation a été envoyée par email. </li>
+                <li>📧 Une confirmation a été envoyée par email. </li>
               </ul>
             </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
-import AgentDashboard from './components/AgentDashboard';
+import AgentDashboard from './components/agent/AgentDashboard';
 import AgentOverdueControl from './components/AgentOverdueControl';
 import Payment from './components/Payment';
 import Confirmation from './components/Confirmation';

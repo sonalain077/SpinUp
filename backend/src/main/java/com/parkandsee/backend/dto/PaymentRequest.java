@@ -1,7 +1,7 @@
 package com.parkandsee.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.FutureOrPresent;
+import com.parkandsee.backend.validation.ValidParkingAddress;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -15,7 +15,6 @@ public class PaymentRequest {
     private String vehicleType;
 
     @NotNull
-    @FutureOrPresent
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime startAt;
 
@@ -23,6 +22,7 @@ public class PaymentRequest {
     private Integer durationMinutes;
 
     @NotBlank
+    @ValidParkingAddress
     private String address;
 
     // payment token would normally be required; here we simulate so optional

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ public class ReservationEntity {
     private LocalDateTime startAt;
 
     @NotNull(message = "La durée en minutes est obligatoire")
-    @Positive(message = "La durée doit être positive")
+    @PositiveOrZero(message = "La durée doit être positive ou nulle (pour démo)")
     @Column(nullable = false)
     private Integer durationMinutes;
 

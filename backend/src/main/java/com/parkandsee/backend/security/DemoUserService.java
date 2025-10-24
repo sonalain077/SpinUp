@@ -15,10 +15,11 @@ public class DemoUserService {
     // demo agent user: username 'agent' password 'agentpass'
     private final String demoUsername = "agent";
     private final String demoPasswordHash;
+    private final BCryptPasswordEncoder encoder;  // RÉUTILISER la même instance
 
     public DemoUserService() {
-        BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
-        this.demoPasswordHash = enc.encode("agentpass");
+        this.encoder = new BCryptPasswordEncoder();
+        this.demoPasswordHash = encoder.encode("agentpass");
     }
 
     public UserDetails loadUserByUsername(String username) {
@@ -29,7 +30,7 @@ public class DemoUserService {
 
     public boolean checkPassword(String username, String rawPassword) {
         if (!demoUsername.equals(username)) return false;
-        BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
-        return enc.matches(rawPassword, demoPasswordHash);
+        // Utiliser la même instance pour la vérification
+        return encoder.matches(rawPassword, demoPasswordHash);
     }
 }

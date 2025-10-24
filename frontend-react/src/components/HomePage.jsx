@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
@@ -17,7 +17,7 @@ const HomePage = () => {
     <div className="home-page">
       <div className="home-container">
         <header className="home-header">
-          <h1>Park & See</h1>
+          <h1>Park & See 🚗</h1>
           <p className="subtitle">Système de gestion de stationnement urbain</p>
         </header>
         

@@ -79,47 +79,87 @@ public class OverdueControlController {
     }
 
     /**
+     * GET /api/agent/overdue/all-active
+     * Récupère TOUTES les réservations actives (ACTIVE + SIGNALE)
+     * Pour le Dashboard Agent : affiche tous les véhicules présents
+     */
+    @GetMapping("/all-active")
+    public ResponseEntity<List<ReservationEntity>> getAllActiveReservations() {
+        List<ReservationEntity> allActive = overdueControlService.findAllActiveReservations();
+        return ResponseEntity.ok(allActive);
+    }
+
+    /**
      * GET /api/agent/occupation
      * Récupère les statistiques d'occupation en temps réel
      */
     @GetMapping("/occupation")
-    public ResponseEntity<OccupationStats> getOccupationStats() {
-        OccupationStats stats = overdueControlService.getOccupationStats();
+    public ResponseEntity<OverdueControlService.OccupationStats> getOccupationStats() {
+        OverdueControlService.OccupationStats stats = overdueControlService.getOccupationStats();
         return ResponseEntity.ok(stats);
     }
 
     /**
-     * Classe pour les statistiques d'occupation
+     * GET /api/agent/occupation/by-zone
+     * Récupère les statistiques d'occupation par zone/parking
      */
-    public static class OccupationStats {
-        private final int totalActive;
-        private final int totalCapacity;
-        private final double occupationRate;
-        private final int availablePlaces;
+    @GetMapping("/occupation/by-zone")
+    public ResponseEntity<List<OverdueControlService.ParkingZoneStats>> getOccupationByZone() {
+        List<OverdueControlService.ParkingZoneStats> stats = overdueControlService.getOccupationByZone();
+        return ResponseEntity.ok(stats);
+    }
 
-        public OccupationStats(int totalActive, int totalCapacity) {
-            this.totalActive = totalActive;
-            this.totalCapacity = totalCapacity;
-            this.availablePlaces = totalCapacity - totalActive;
-            this.occupationRate = totalCapacity > 0 ? 
-                (double) totalActive / totalCapacity * 100 : 0;
-        }
+    /**
+     * GET /api/agent/parking/{parkingName}/vehicles
+     * Récupère tous les véhicules actifs dans un parking spécifique
+     */
+    @GetMapping("/parking/{parkingName}/vehicles")
+    public ResponseEntity<List<ReservationEntity>> getVehiclesByParking(
+            @PathVariable String parkingName) {
+        List<ReservationEntity> vehicles = overdueControlService.findVehiclesByParking(parkingName);
+        return ResponseEntity.ok(vehicles);
+    }
 
-        public int getTotalActive() {
-            return totalActive;
+    /**
+     * PUT /api/agent/overdue/{reservationId}/signal
+     * Signale une réservation comme infraction
+     */
+    @PutMapping("/{reservationId}/signal")
+    public ResponseEntity<?> signalInfraction(@PathVariable String reservationId) {
+        ReservationEntity updated = overdueControlService.signalInfraction(reservationId);
+        
+        if (updated == null) {
+            return ResponseEntity.status(404)
+                    .body(new MarkResponse(false, "Réservation non trouvée"));
         }
+        
+        return ResponseEntity.ok(new MarkResponse(true, "Infraction signalée"));
+    }
 
-        public int getTotalCapacity() {
-            return totalCapacity;
+    /**
+     * PUT /api/agent/overdue/{reservationId}/regularize
+     * Régularise une réservation en excès
+     */
+    @PutMapping("/{reservationId}/regularize")
+    public ResponseEntity<?> regularizeInfraction(@PathVariable String reservationId) {
+        ReservationEntity updated = overdueControlService.regularizeInfraction(reservationId);
+        
+        if (updated == null) {
+            return ResponseEntity.status(404)
+                    .body(new MarkResponse(false, "Réservation non trouvée"));
         }
+        
+        return ResponseEntity.ok(updated);
+    }
 
-        public double getOccupationRate() {
-            return occupationRate;
-        }
-
-        public int getAvailablePlaces() {
-            return availablePlaces;
-        }
+    /**
+     * GET /api/agent/overdue/history
+     * Récupère l'historique des véhicules régularisés
+     */
+    @GetMapping("/history")
+    public ResponseEntity<List<ReservationEntity>> getRegularizedHistory() {
+        List<ReservationEntity> history = overdueControlService.getRegularizedHistory();
+        return ResponseEntity.ok(history);
     }
 
     /**
