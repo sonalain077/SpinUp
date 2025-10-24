@@ -117,7 +117,8 @@ class OverdueControlControllerTest {
     @Test
     void getOverdueStatistics_returnsOkWithStats() throws Exception {
         // Given
-        OverdueControlService.OverdueStats stats = new OverdueControlService.OverdueStats(5L, 2L, 3L, LocalDateTime.now());
+        // Paramètres: activeReservations, currentOverdue, markedOverdue, regularized, totalOverdueMinutes, averageOverdueMinutes, lastUpdate
+        OverdueControlService.OverdueStats stats = new OverdueControlService.OverdueStats(5L, 2L, 3L, 1L, 150L, 50L, LocalDateTime.now());
         
         when(overdueControlService.getOverdueStats()).thenReturn(stats);
 

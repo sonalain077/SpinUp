@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getVehicleTypeLabel } from '../lib/vehicleTypes';
 import './Payment.css';
 
 const Payment = () => {
@@ -163,7 +164,7 @@ const Payment = () => {
               <div className="summary-details">
                 <div className="detail-row">
                   <span className="label">🚗 Véhicule :</span>
-                  <span className="value">{reservationData.licencePlate} ({reservationData.vehicleType})</span>
+                  <span className="value">{reservationData.licencePlate} ({getVehicleTypeLabel(reservationData.vehicleType)})</span>
                 </div>
                 
                 <div className="detail-row">

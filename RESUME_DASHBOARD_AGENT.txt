@@ -1,0 +1,673 @@
+═══════════════════════════════════════════════════════════════════════════════
+📊 RÉSUMÉ COMPLET - DASHBOARD AGENT (PARK & SEE) - POUR GPT-5
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 CONTEXTE PROJET
+═══════════════════════════════════════════════════════════════════════════════
+
+Park & See - Phase 1 : Solution de gestion du stationnement dans les parkings 
+publics d'une grande agglomération française.
+
+Dashboard Agent : Interface web pour les contrôleurs (agents de mairie & police 
+municipale) permettant de :
+- Surveiller en temps réel les véhicules garés
+- Détecter et signaler les infractions (dépassement de durée payée)
+- Régulariser les infractions
+- Visualiser les statistiques d'occupation
+
+───────────────────────────────────────────────────────────────────────────────
+
+🏗️ ARCHITECTURE TECHNIQUE
+═══════════════════════════════════════════════════════════════════════════════
+
+Stack :
+- Backend  : Spring Boot 3.1.4 + JPA/Hibernate + H2 (en mémoire pour dev)
+- Frontend : React 18 (JavaScript, PAS TypeScript) + CSS
+- API      : REST sur http://localhost:8081/api
+- Ports    : Backend 8081, Frontend 5173 (Vite)
+
+Fichiers Principaux :
+
+Backend :
+  backend/src/main/java/com/parkandsee/backend/
+  ├── controller/OverdueControlController.java    # Endpoints API agent
+  ├── service/OverdueControlService.java          # Logique métier infractions
+  ├── entity/ReservationEntity.java               # Modèle réservation
+  ├── entity/ReservationStatus.java               # États des réservations
+  └── resources/data.sql                          # Données de test (18 véhicules)
+
+Frontend :
+  frontend-react/src/components/
+  ├── AgentDashboard.jsx                          # Composant principal dashboard
+  ├── AgentDashboard.css                          # Styles du dashboard
+  └── ParkingReservation.jsx                      # Formulaire réservation usager
+
+───────────────────────────────────────────────────────────────────────────────
+
+📋 MODÈLE DE DONNÉES
+═══════════════════════════════════════════════════════════════════════════════
+
+États des Réservations (ReservationStatus) :
+
+public enum ReservationStatus {
+    ACTIVE,      // Véhicule garé (en cours de stationnement)
+    SIGNALE,     // Infraction signalée par un agent
+    COMPLETED,   // Véhicule parti / Infraction régularisée
+    CANCELLED    // Réservation annulée
+}
+
+⚠️ IMPORTANT : OVERDUE EST OBSOLÈTE - Ne plus utiliser ce statut !
+
+Workflow des Statuts :
+
+┌─────────────────────────────────────────┐
+│ 1. UTILISATEUR RÉSERVE & PAYE          │
+│    ↓                                    │
+│    ACTIVE (véhicule garé)              │
+└─────────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────────┐
+│ 2. DURÉE PAYÉE DÉPASSÉE (automatique)  │
+│    ↓                                    │
+│    ACTIVE (toujours, mais en excès)    │
+│    Ticket apparaît dans dashboard      │
+└─────────────────────────────────────────┘
+                ↓
+        ┌───────┴───────┐
+        ▼               ▼
+┌─────────────┐   ┌──────────────┐
+│ 3a. AGENT   │   │ 3b. AGENT    │
+│  SIGNALE    │   │  RÉGULARISE  │
+│             │   │  DIRECTEMENT │
+└─────────────┘   └──────────────┘
+        │               │
+        ▼               │
+    SIGNALE             │
+(badge orange)          │
+        │               │
+        ▼               │
+┌──────────────────────┴─────────┐
+│ 4. AGENT RÉGULARISE            │
+│    ↓                           │
+│    COMPLETED (véhicule parti)  │
+└────────────────────────────────┘
+
+Règles Importantes :
+✓ Un véhicule ACTIVE peut être en excès ou non (calculé en temps réel)
+✓ Un véhicule SIGNALE reste dans le parking jusqu'à régularisation
+✓ Un véhicule COMPLETED disparaît des parkings et va dans l'historique
+✓ CANCELLED ne compte pas dans l'occupation
+✗ OVERDUE EST OBSOLÈTE : Ne plus utiliser ce statut (remplacé par SIGNALE)
+
+───────────────────────────────────────────────────────────────────────────────
+
+🎨 INTERFACE DASHBOARD AGENT
+═══════════════════════════════════════════════════════════════════════════════
+
+Page Principale : 4 Sections
+
+─────────────────────────────────────────────────────────────────────────────
+SECTION 1 : Statistiques Générales (en haut)
+─────────────────────────────────────────────────────────────────────────────
+
+┌────────────────────────────────────────────────┐
+│ 🚗 Véhicules garés    : 13 / 205 (6.3%)       │
+│ 💎 Indice Saturation  : Normal                 │
+│ 🏆 Parking + rempli   : Gare (13%)             │
+│ 📊 Indice Répartition : Équilibrée (5.2%)     │
+└────────────────────────────────────────────────┘
+
+Formules :
+- Véhicules garés = COUNT(ACTIVE) + COUNT(SIGNALE)
+- Taux occupation = (Véhicules garés / 205) × 100
+- ⚠️ NE PAS COMPTER OVERDUE (statut obsolète)
+
+─────────────────────────────────────────────────────────────────────────────
+SECTION 2 : Occupation par Parking (7 parkings)
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────┐
+│ Parking Gare          4 / 30    │ ← 13% occupation
+│ Parking Centre Ville  4 / 40    │
+│ Parking République    2 / 20    │
+│ Parking Mairie        1 / 35    │
+│ Parking Liberté       1 / 25    │
+│ Parking Cathédrale    1 / 30    │
+│ Parking Souterrain    0 / 25    │
+└─────────────────────────────────┘
+
+Clic sur un parking → Ouvre popup avec :
+- Liste des véhicules présents (ACTIVE + SIGNALE)
+- Colonnes : Plaque, Type, Statut, Durée, Temps restant
+- Badge pour statut :
+  * ✅ OK (vert) : Pas en excès
+  * ⏰ En excès (rouge) : ACTIVE avec dépassement
+  * 🚨 Signalé (orange) : SIGNALE
+
+─────────────────────────────────────────────────────────────────────────────
+SECTION 3 : Statistiques Contrôle des Excès (5 cartes)
+─────────────────────────────────────────────────────────────────────────────
+
+┌──────────────────────────────────────────────────┐
+│ ⏰ En excès maintenant : 6                       │ ← ACTIVE avec dépassement
+│ 🚨 Déjà Signalés      : 4                       │ ← SIGNALE
+│ ✅ Régularisés        : 5 [📜 Historique]       │ ← COMPLETED (cliquable)
+│ 📊 Moyenne Excès      : 28 min                  │ ← Moyenne par véhicule
+│ ⏱️ Temps Total Excès  : 2h 52min                │ ← Somme de tous les excès
+└──────────────────────────────────────────────────┘
+
+Formules :
+- En excès maintenant = COUNT(ACTIVE WHERE maintenant > startAt + durationMinutes)
+- Déjà Signalés       = COUNT(SIGNALE)
+- Régularisés         = COUNT(COMPLETED)
+- Moyenne Excès       = SUM(excès) / COUNT(tickets en excès)
+- Temps Total Excès   = SUM(excès de tous les ACTIVE en excès + SIGNALE)
+
+Calcul de l'excès pour un véhicule :
+excès = (maintenant - startAt) - durationMinutes
+
+Exemple : 
+  Début 10h00, Durée payée 60min, Maintenant 11h30
+  excès = 90 min - 60 min = 30 min d'excès
+
+─────────────────────────────────────────────────────────────────────────────
+SECTION 4 : Infractions par Parking (liste de tickets)
+─────────────────────────────────────────────────────────────────────────────
+
+Affichage :
+- Parkings regroupés (ex: "Parking Centre Ville - 4 infractions")
+- Pour chaque véhicule en infraction :
+  * Immatriculation (ex: MN-111-OP)
+  * Type (Voiture, Moto, Trottinette, Vélo)
+  * Durée payée (ex: 1h)
+  * Heure de début (ex: 02:34)
+  * Excès (ex: +37 min) avec badge de sévérité :
+    - 🟡 LÉGER   : 0-20 min
+    - 🟠 MODÉRÉ  : 20-60 min
+    - 🔴 GRAVE   : > 60 min
+    - 🟠 SIGNALÉ : Statut SIGNALE (badge avec animation pulse)
+
+Boutons d'action :
+
+Si ACTIVE en excès :
+  [🚨 SIGNALER L'INFRACTION]  (rouge)  → Passe en SIGNALE
+  [✅ EXCÈS RÉGULARISÉ]       (vert)   → Passe en COMPLETED
+
+Si SIGNALE :
+  Badge [⚙️ En attente de régularisation] (jaune/orange)
+  [✅ RÉGULARISER MAINTENANT] (vert)   → Passe en COMPLETED
+
+───────────────────────────────────────────────────────────────────────────────
+
+🔧 PROBLÈMES RÉCENTS CORRIGÉS
+═══════════════════════════════════════════════════════════════════════════════
+
+─────────────────────────────────────────────────────────────────────────────
+1. ⚠️ Statut OVERDUE Obsolète
+─────────────────────────────────────────────────────────────────────────────
+
+Problème : Le backend comptait ACTIVE + OVERDUE + SIGNALE mais OVERDUE 
+           n'existe plus dans notre logique.
+
+Solution : Supprimé toutes références à ReservationStatus.OVERDUE dans :
+           - getOccupationStats()
+           - getOccupationByZone()
+           - findVehiclesByParking()
+
+Code corrigé :
+
+// AVANT ❌
+List<ReservationEntity> activeReservations = 
+    reservationRepository.findByStatus(ReservationStatus.ACTIVE);
+activeReservations.addAll(
+    reservationRepository.findByStatus(ReservationStatus.OVERDUE)); // OBSOLÈTE
+activeReservations.addAll(
+    reservationRepository.findByStatus(ReservationStatus.SIGNALE));
+
+// APRÈS ✅
+List<ReservationEntity> activeReservations = 
+    reservationRepository.findByStatus(ReservationStatus.ACTIVE);
+activeReservations.addAll(
+    reservationRepository.findByStatus(ReservationStatus.SIGNALE));
+
+─────────────────────────────────────────────────────────────────────────────
+2. ⚠️ Véhicules "Fantômes" (14 au lieu de 13)
+─────────────────────────────────────────────────────────────────────────────
+
+Problème : Les statistiques affichaient 14 véhicules alors que visuellement 
+           il n'y en avait que 13.
+
+Cause    : Le statut OVERDUE était encore compté.
+
+Résultat : Maintenant 13 véhicules correctement comptés (9 ACTIVE + 4 SIGNALE).
+
+─────────────────────────────────────────────────────────────────────────────
+3. ⚠️ Temps Restant Incohérent
+─────────────────────────────────────────────────────────────────────────────
+
+Problème : Un véhicule avec durée payée de 1 min affichait "29 min restantes".
+
+Cause    : La création de véhicule ajoutait +30 minutes à l'heure de début.
+
+Solution : 
+
+// AVANT (ParkingReservation.jsx ligne 56) ❌
+now.setMinutes(now.getMinutes() + 30); // Commence dans 30 min
+
+// APRÈS ✅
+// Pas d'ajout → commence immédiatement
+
+─────────────────────────────────────────────────────────────────────────────
+4. ⚠️ Durée de Démo Trop Courte
+─────────────────────────────────────────────────────────────────────────────
+
+Problème : L'option "Démo infraction (10 secondes)" envoyait 0.167 min 
+           (arrondi à 0 par le backend).
+
+Solution : Changé à 1 minute pour que ce soit visible et testable.
+
+// ParkingReservation.jsx
+const isDemoInfraction = parseInt(formData.durationMinutes) === 0;
+const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes);
+
+Label : "🎬 Démo infraction (1 minute)"
+
+─────────────────────────────────────────────────────────────────────────────
+5. ⚠️ Calcul Temps Total Excès Incorrect
+─────────────────────────────────────────────────────────────────────────────
+
+Problème : Le temps augmentait en permanence car calculé en temps réel depuis 
+           la fin théorique.
+
+Solution : Calcul fixe au moment de l'affichage :
+
+const calculateOverdueMinutes = (ticket) => {
+  const now = new Date();
+  const startAt = new Date(ticket.startAt);
+  const endTime = new Date(startAt.getTime() + ticket.durationMinutes * 60000);
+  const diff = Math.floor((now - endTime) / 60000);
+  return Math.max(0, diff); // Retourne 0 si pas encore en excès
+};
+
+───────────────────────────────────────────────────────────────────────────────
+
+📊 DONNÉES ACTUELLES (data.sql)
+═══════════════════════════════════════════════════════════════════════════════
+
+Répartition des 18 Véhicules :
+
+ACTIVE (9 véhicules) :
+├─ Pas en excès (3) : AB-123-CD, EF-456-GH, IJ-789-KL
+└─ En excès (6) :
+   ├─ Léger   (3) : MN-111-OP (+15min), QR-222-ST (+5min), UV-333-WX (+5min)
+   ├─ Modéré  (2) : CD-555-EF (+30min), GH-666-IJ (+25min)
+   └─ Grave   (1) : KL-777-MN (+60min)
+
+SIGNALE (4 véhicules) :
+├─ TT-111-UU (+35min) @ Centre Ville
+├─ VV-222-WW (+25min) @ République
+├─ XX-333-YY (+20min) @ Gare
+└─ ZZ-444-AA (+60min) @ Cathédrale
+
+COMPLETED (5 véhicules) :
+├─ BB-111-CC, DD-222-EE, FF-333-GG, HH-444-II, JJ-555-KK
+└─ (dans l'historique, ne comptent pas dans l'occupation)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Répartition par Parking :
+
+┌─────────────┬────────┬─────────┬───────┬──────────┬──────┐
+│ Parking     │ ACTIVE │ SIGNALE │ Total │ Capacité │ Taux │
+├─────────────┼────────┼─────────┼───────┼──────────┼──────┤
+│ Centre Ville│   3    │    1    │   4   │    40    │ 10%  │
+│ Gare        │   3    │    1    │   4   │    30    │ 13%  │
+│ République  │   1    │    1    │   2   │    20    │ 10%  │
+│ Mairie      │   1    │    0    │   1   │    35    │  3%  │
+│ Liberté     │   1    │    0    │   1   │    25    │  4%  │
+│ Cathédrale  │   0    │    1    │   1   │    30    │  3%  │
+│ Souterrain  │   0    │    0    │   0   │    25    │  0%  │
+├─────────────┼────────┼─────────┼───────┼──────────┼──────┤
+│ TOTAL       │   9    │    4    │  13   │   205    │ 6.3% │
+└─────────────┴────────┴─────────┴───────┴──────────┴──────┘
+
+───────────────────────────────────────────────────────────────────────────────
+
+🔄 ENDPOINTS API UTILISÉS
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend (OverdueControlController.java) :
+
+GET  /api/agent/overdue/stats
+     → Retourne les statistiques d'excès
+     { currentOverdue, markedOverdue, regularized, 
+       averageOverdueMinutes, totalOverdueMinutes }
+
+GET  /api/agent/overdue
+     → Retourne la liste des véhicules en infraction (ACTIVE en excès + SIGNALE)
+     [ { id, licencePlate, vehicleType, startAt, durationMinutes, 
+         status, address, ... } ]
+
+GET  /api/agent/overdue/history
+     → Retourne l'historique des régularisations (statut COMPLETED uniquement)
+     [ { id, licencePlate, vehicleType, address, ... } ]
+
+PUT  /api/agent/overdue/{id}/signal
+     → Signale une infraction
+     Change status: ACTIVE → SIGNALE
+
+PUT  /api/agent/overdue/{id}/regularize
+     → Régularise une infraction
+     Change status: ACTIVE|SIGNALE → COMPLETED
+
+GET  /api/agent/overdue/occupation
+     → Retourne les statistiques d'occupation globale
+     { totalActive, totalCapacity, availablePlaces, occupationRate }
+
+GET  /api/agent/overdue/occupation/by-zone
+     → Retourne l'occupation par parking
+     [ { parkingName, occupiedPlaces, totalCapacity, 
+         availablePlaces, occupationRate } ]
+
+GET  /api/agent/overdue/parking/{parkingName}/vehicles
+     → Retourne les véhicules présents dans un parking spécifique
+     [ { id, licencePlate, vehicleType, status, ... } ]
+
+─────────────────────────────────────────────────────────────────────────────
+
+Frontend (AgentDashboard.jsx) :
+
+Chargement toutes les 30 secondes :
+
+useEffect(() => {
+  loadData();
+  const interval = setInterval(loadData, 30000);
+  return () => clearInterval(interval);
+}, []);
+
+const loadData = async () => {
+  // 1. Récupère tickets en infraction
+  const tickets = await fetch('/api/agent/overdue');
+  
+  // 2. Calcule stats localement (frontend)
+  const activeOverdue = tickets.filter(t => 
+    t.status === 'ACTIVE' && calculateOverdueMinutes(t) > 0
+  );
+  const signaled = tickets.filter(t => t.status === 'SIGNALE');
+  
+  // 3. Récupère historique
+  const history = await fetch('/api/agent/overdue/history');
+  
+  // 4. Récupère occupation
+  const occupation = await fetch('/api/agent/overdue/occupation');
+  const zones = await fetch('/api/agent/overdue/occupation/by-zone');
+};
+
+───────────────────────────────────────────────────────────────────────────────
+
+⚡ ACTIONS DISPONIBLES POUR L'AGENT
+═══════════════════════════════════════════════════════════════════════════════
+
+Dans "Infractions par Parking" :
+
+─────────────────────────────────────────────────────────────────────────────
+Ticket ACTIVE en excès :
+─────────────────────────────────────────────────────────────────────────────
+
+const signalInfraction = async (id, licencePlate) => {
+  await fetch(`/api/agent/overdue/${id}/signal`, { method: 'PUT' });
+  // Met à jour localement : status = 'SIGNALE'
+  // Stats : "En excès maintenant" -1, "Déjà Signalés" +1
+  // Badge passe de rouge à orange avec animation pulse
+};
+
+const regularizeInfraction = async (id, licencePlate) => {
+  await fetch(`/api/agent/overdue/${id}/regularize`, { method: 'PUT' });
+  // Retire le ticket de la liste
+  // Ajoute à l'historique
+  // Stats : "En excès maintenant" -1, "Régularisés" +1
+};
+
+─────────────────────────────────────────────────────────────────────────────
+Ticket SIGNALE :
+─────────────────────────────────────────────────────────────────────────────
+
+const regularizeInfraction = async (id, licencePlate) => {
+  await fetch(`/api/agent/overdue/${id}/regularize`, { method: 'PUT' });
+  // Même comportement
+  // Stats : "Déjà Signalés" -1, "Régularisés" +1
+};
+
+─────────────────────────────────────────────────────────────────────────────
+Modal Historique (clic sur "Régularisés") :
+─────────────────────────────────────────────────────────────────────────────
+
+const showHistoryModal = () => {
+  setShowHistory(true);
+  // Affiche table avec :
+  // - Immatriculation
+  // - Type véhicule
+  // - Parking
+  // - Durée excès
+  // - Date régularisation (updatedAt)
+};
+
+───────────────────────────────────────────────────────────────────────────────
+
+🎯 POINTS D'ATTENTION CRITIQUES
+═══════════════════════════════════════════════════════════════════════════════
+
+─────────────────────────────────────────────────────────────────────────────
+1. Calcul de l'Excès
+─────────────────────────────────────────────────────────────────────────────
+
+CORRECT ✅
+excès = (maintenant - heure_de_début) - durée_payée
+
+Exemple :
+  Début: 10h00, Durée payée: 60 min, Maintenant: 11h30
+  Temps écoulé: 90 min
+  excès = 90 - 60 = 30 min d'excès
+
+INCORRECT ❌
+excès = maintenant - (heure_de_début + durée_payée)
+// → Continue d'augmenter indéfiniment même après régularisation
+
+─────────────────────────────────────────────────────────────────────────────
+2. États Exclusifs
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Un véhicule ne peut avoir qu'UN SEUL statut à la fois
+✗ Pas de doublons type res-004 (ACTIVE) + res-004-sig (SIGNALE)
+✓ Transition claire : ACTIVE → SIGNALE → COMPLETED
+
+─────────────────────────────────────────────────────────────────────────────
+3. Occupation = ACTIVE + SIGNALE uniquement
+─────────────────────────────────────────────────────────────────────────────
+
+✅ ACTIVE (tous, en excès ou non)
+✅ SIGNALE
+❌ COMPLETED (véhicules partis)
+❌ CANCELLED (réservations annulées)
+❌ OVERDUE (OBSOLÈTE - NE PLUS UTILISER)
+
+Formule :
+Véhicules garés = COUNT(ACTIVE) + COUNT(SIGNALE)
+
+Code backend :
+List<ReservationEntity> present = new ArrayList<>();
+present.addAll(reservationRepository.findByStatus(ReservationStatus.ACTIVE));
+present.addAll(reservationRepository.findByStatus(ReservationStatus.SIGNALE));
+
+─────────────────────────────────────────────────────────────────────────────
+4. Temps Réel vs Temps Fixe
+─────────────────────────────────────────────────────────────────────────────
+
+Excès individuel : Calculé en temps réel pour l'affichage
+  → Augmente chaque seconde pour les tickets en cours
+
+Temps total excès : Somme des excès calculés à un instant T
+  → Pas une durée qui augmente continuellement
+  → Recalculé à chaque chargement des données (toutes les 30s)
+
+─────────────────────────────────────────────────────────────────────────────
+5. Backend H2 en Mémoire
+─────────────────────────────────────────────────────────────────────────────
+
+⚠️ Les données se réinitialisent à chaque redémarrage du backend
+⚠️ Véhicules ajoutés via UI disparaissent au restart
+✓ Ajouter dans data.sql pour persistance entre redémarrages
+
+Pour ajouter un véhicule permanent :
+1. Éditer backend/src/main/resources/data.sql
+2. Ajouter une ligne INSERT INTO reservations (...)
+3. Redémarrer le backend
+
+─────────────────────────────────────────────────────────────────────────────
+6. Format des Dates
+─────────────────────────────────────────────────────────────────────────────
+
+Backend (Java) : LocalDateTime (yyyy-MM-ddTHH:mm:ss)
+Frontend (JS)  : Date (ISO 8601)
+
+Conversion :
+  const startAt = new Date(ticket.startAt); // Automatique
+
+Calcul durée :
+  const endTime = new Date(startAt.getTime() + durationMinutes * 60000);
+  const diff = Math.floor((now - endTime) / 60000); // En minutes
+
+───────────────────────────────────────────────────────────────────────────────
+
+🐛 DEBUGGING CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Si les données ne correspondent pas :
+
+1. Console navigateur (F12) :
+   □ Vérifier les logs "📊 Nombre de parkings reçus: X"
+   □ Vérifier "📊 Total véhicules dans ces parkings: X"
+   □ Vérifier "🖼️ RENDU: Affichage de X parkings"
+
+2. Logs backend (fenêtre PowerShell) :
+   □ Vérifier "📊 [Occupation] Total actif: X / 205 places"
+   □ Vérifier "📊 [Occupation par zone] Total réservations actives: X"
+   □ Compter manuellement ACTIVE + SIGNALE dans les logs
+
+3. Vider cache :
+   □ Hard refresh : Ctrl+Shift+R
+   □ Ou navigation privée (Ctrl+Shift+N)
+   □ Ou vider complètement : Ctrl+Shift+Delete
+
+4. Redémarrer backend :
+   □ Arrêter : $proc = Get-NetTCPConnection -LocalPort 8081 | 
+                Select -ExpandProperty OwningProcess -Unique; 
+                Stop-Process -Id $proc -Force
+   □ Démarrer : cd backend; .\start-backend.ps1
+   □ Attendre 15 secondes pour démarrage complet
+
+5. Vérifier les données :
+   □ Ouvrir backend/src/main/resources/data.sql
+   □ Compter manuellement les INSERT avec ACTIVE
+   □ Compter manuellement les INSERT avec SIGNALE
+   □ Vérifier qu'il n'y a pas de OVERDUE
+
+───────────────────────────────────────────────────────────────────────────────
+
+🚀 COMMANDES UTILES
+═══════════════════════════════════════════════════════════════════════════════
+
+Démarrage complet (dev) :
+
+# Terminal 1 - Backend
+cd backend
+.\start-backend.ps1
+
+# Terminal 2 - Frontend
+cd frontend-react
+npm run dev
+
+# Attendre 15-20 secondes puis ouvrir http://localhost:5173
+
+─────────────────────────────────────────────────────────────────────────────
+
+Arrêter le backend sur le port 8081 :
+
+$proc = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | 
+        Select-Object -ExpandProperty OwningProcess -Unique
+if ($proc) { 
+    Stop-Process -Id $proc -Force
+    Write-Host "Backend arrêté (PID $proc)" -ForegroundColor Green 
+}
+
+─────────────────────────────────────────────────────────────────────────────
+
+Vérifier l'API backend :
+
+# Statistiques d'occupation
+curl http://localhost:8081/api/agent/overdue/occupation
+
+# Liste des infractions
+curl http://localhost:8081/api/agent/overdue
+
+# Occupation par parking
+curl http://localhost:8081/api/agent/overdue/occupation/by-zone
+
+───────────────────────────────────────────────────────────────────────────────
+
+📝 TESTS À EFFECTUER
+═══════════════════════════════════════════════════════════════════════════════
+
+Workflow complet :
+
+1. Créer un véhicule avec "Démo infraction (1 minute)"
+   → Véhicule apparaît dans le parking
+   → Temps restant : 1 min
+
+2. Attendre 1-2 minutes
+   → Véhicule apparaît dans "Infractions par Parking"
+   → Badge rouge "En excès"
+   → Stat "En excès maintenant" +1
+
+3. Cliquer "SIGNALER L'INFRACTION"
+   → Badge passe à orange "Signalé"
+   → Stat "En excès maintenant" -1
+   → Stat "Déjà Signalés" +1
+
+4. Cliquer "RÉGULARISER MAINTENANT"
+   → Ticket disparaît de la liste
+   → Stat "Déjà Signalés" -1
+   → Stat "Régularisés" +1
+   → Véhicule apparaît dans "Historique"
+
+───────────────────────────────────────────────────────────────────────────────
+
+📌 ÉTAT ACTUEL DU SYSTÈME
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ FONCTIONNEL :
+   - 13 véhicules correctement comptés (9 ACTIVE + 4 SIGNALE)
+   - Stats cohérentes avec les données affichées
+   - Workflow complet de signalement/régularisation opérationnel
+   - Démo de 1 minute fonctionnelle pour tests
+   - Occupation par parking correcte (7 parkings affichés)
+   - Popup détail parking avec statuts corrects
+   - Historique des régularisations accessible
+
+⚠️ LIMITATIONS CONNUES :
+   - Base H2 en mémoire → Données réinitialisées à chaque restart
+   - Véhicules ajoutés via UI non persistants
+   - Temps total excès recalculé toutes les 30s (normal)
+   - Pas d'authentification agent (Phase 2)
+
+🎯 PROCHAINES ÉVOLUTIONS POSSIBLES :
+   - Filtres par parking/sévérité
+   - Notifications sonores nouveaux excès
+   - Export CSV historique
+   - Authentification JWT
+   - Statistiques par période
+   - Base PostgreSQL en production
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DU RÉSUMÉ
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AgentDashboard.css';
 
@@ -9,7 +9,17 @@ const AgentDashboard = () => {
     currentOverdue: 0,
     markedOverdue: 0
   });
+  const [occupation, setOccupation] = useState({
+    totalActive: 0,
+    totalCapacity: 100,
+    occupationRate: 0,
+    availablePlaces: 100
+  });
+  const [parkingZones, setParkingZones] = useState([]); // Stats par zone
   const [overdueReservations, setOverdueReservations] = useState([]);
+  const [allReservations, setAllReservations] = useState([]); // NOUVEAU : Toutes les réservations
+  const [selectedParking, setSelectedParking] = useState(null); // NOUVEAU : Parking sélectionné pour le modal
+  const [parkingVehicles, setParkingVehicles] = useState([]); // NOUVEAU : Véhicules du parking sélectionné
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
   const [filter, setFilter] = useState('all');
@@ -31,9 +41,11 @@ const AgentDashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [overdueRes, statsRes] = await Promise.all([
+      const [overdueRes, statsRes, occupationRes, zonesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/agent/overdue`),
-        fetch(`${API_BASE_URL}/agent/overdue/stats`)
+        fetch(`${API_BASE_URL}/agent/overdue/stats`),
+        fetch(`${API_BASE_URL}/agent/overdue/occupation`),
+        fetch(`${API_BASE_URL}/agent/overdue/occupation/by-zone`) // NOUVEAU
       ]);
 
       if (overdueRes.ok && statsRes.ok) {
@@ -46,6 +58,16 @@ const AgentDashboard = () => {
           markedOverdue: statsData.markedOverdue || 0
         });
         calculateAnalytics(overdueData);
+      }
+
+      if (occupationRes.ok) {
+        const occupationData = await occupationRes.json();
+        setOccupation(occupationData);
+      }
+
+      if (zonesRes.ok) {
+        const zonesData = await zonesRes.json();
+        setParkingZones(zonesData); // NOUVEAU
       }
     } catch (error) {
       console.error('❌ Erreur chargement:', error);
@@ -85,6 +107,37 @@ const AgentDashboard = () => {
       topLocations,
       averageOverdueMinutes
     });
+  };
+
+  // Gestionnaire de clic sur un parking
+  const handleParkingClick = async (parkingName) => {
+    setSelectedParking(parkingName);
+    try {
+      const response = await fetch(`${API_BASE_URL}/agent/overdue/parking/${encodeURIComponent(parkingName)}/vehicles`);
+      if (response.ok) {
+        const vehicles = await response.json();
+        setParkingVehicles(vehicles);
+      } else {
+        console.error('❌ Erreur chargement véhicules');
+        setParkingVehicles([]);
+      }
+    } catch (error) {
+      console.error('❌ Erreur:', error);
+      setParkingVehicles([]);
+    }
+  };
+
+  // Calculer le temps restant
+  const calculateTimeRemaining = (reservation) => {
+    const endTime = new Date(reservation.startAt);
+    endTime.setMinutes(endTime.getMinutes() + reservation.durationMinutes);
+    const now = new Date();
+    const diff = Math.floor((endTime - now) / 1000 / 60);
+    
+    if (diff < 0) {
+      return <span style={{ color: '#EF4444', fontWeight: 'bold' }}>Dépassé de {Math.abs(diff)} min</span>;
+    }
+    return `${diff} min`;
   };
 
   const markAsOverdue = async (reservationId, licencePlate) => {
@@ -155,13 +208,23 @@ const AgentDashboard = () => {
     return labels[type] || type;
   };
 
-  const filteredReservations = overdueReservations.filter(res => {
-    if (filter === 'all') return true;
-    const minutes = calculateOverdueMinutes(res);
-    if (filter === 'severe') return minutes > 60;
-    if (filter === 'moderate') return minutes > 30 && minutes <= 60;
-    return true;
-  });
+  const filteredReservations = overdueReservations
+    .filter(res => {
+      if (filter === 'all') return true;
+      const minutes = calculateOverdueMinutes(res);
+      if (filter === 'severe') return minutes > 60;
+      if (filter === 'moderate') return minutes > 30 && minutes <= 60;
+      return true;
+    })
+    .sort((a, b) => {
+      // Tri par zone (address), puis par temps de dépassement (du plus grave au moins grave)
+      if (a.address !== b.address) {
+        return a.address.localeCompare(b.address);
+      }
+      const minutesA = calculateOverdueMinutes(a);
+      const minutesB = calculateOverdueMinutes(b);
+      return minutesB - minutesA;
+    });
 
   const handleBackToHome = () => {
     navigate('/');
@@ -200,8 +263,27 @@ const AgentDashboard = () => {
             </div>
           </div>
 
-          {/* Stats cards */}
+          {/* Stats cards principales */}
           <div className="stats-grid">
+            <div className="stat-card occupation-card">
+              <div className="stat-number">
+                {loading ? '...' : occupation.totalActive}
+              </div>
+              <div className="stat-label">Véhicules garés</div>
+              <div className="occupation-bar">
+                <div 
+                  className="occupation-fill" 
+                  style={{ width: `${occupation.occupationRate}%` }}
+                ></div>
+              </div>
+              <div className="occupation-percentage">
+                {occupation.occupationRate.toFixed(1)}% de remplissage
+              </div>
+            </div>
+            <div className="stat-card available-card">
+              <div className="stat-number">{loading ? '...' : occupation.availablePlaces}</div>
+              <div className="stat-label">Places disponibles</div>
+            </div>
             <div className="stat-card current-overdue">
               <div className="stat-number">{loading ? '...' : stats.currentOverdue}</div>
               <div className="stat-label">En excès maintenant</div>
@@ -215,6 +297,91 @@ const AgentDashboard = () => {
               <div className="stat-label">Moyenne excès (min)</div>
             </div>
           </div>
+
+          {/* NOUVEAU: Occupation par Zone */}
+          <div className="zones-section">
+            <h3 className="zones-title">
+              <span className="zones-icon">🅿️</span>
+              Occupation par Parking
+            </h3>
+            <div className="zones-grid">
+              {loading ? (
+                <div className="loading-zones">⟳ Chargement des zones...</div>
+              ) : parkingZones.length === 0 ? (
+                <div className="no-zones">Aucune donnée disponible</div>
+              ) : (
+                parkingZones.map((zone, index) => (
+                  <div 
+                    key={index} 
+                    className="zone-card"
+                    onClick={() => handleParkingClick(zone.parkingName)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="zone-header">
+                      <span className="zone-name">{zone.parkingName}</span>
+                      <span className={`zone-status ${zone.occupationRate > 80 ? 'full' : zone.occupationRate > 60 ? 'busy' : 'available'}`}>
+                        {zone.occupationRate > 80 ? '🔴' : zone.occupationRate > 60 ? '🟠' : '🟢'}
+                      </span>
+                    </div>
+                    <div className="zone-stats">
+                      <div className="zone-numbers">
+                        <span className="zone-occupied">{zone.occupiedPlaces}</span>
+                        <span className="zone-separator">/</span>
+                        <span className="zone-capacity">{zone.totalCapacity}</span>
+                      </div>
+                      <div className="zone-available">
+                        {zone.availablePlaces} place{zone.availablePlaces > 1 ? 's' : ''} libre{zone.availablePlaces > 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className="zone-progress-bar">
+                      <div 
+                        className={`zone-progress-fill ${zone.occupationRate > 80 ? 'full' : zone.occupationRate > 60 ? 'busy' : ''}`}
+                        style={{ width: `${zone.occupationRate}%` }}
+                      ></div>
+                    </div>
+                    <div className="zone-percentage">
+                      {zone.occupationRate.toFixed(0)}%
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Modal pour les véhicules d'un parking */}
+          {selectedParking && (
+            <div className="modal-backdrop" onClick={() => setSelectedParking(null)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn" onClick={() => setSelectedParking(null)}>✕</button>
+                <h2 className="modal-title">🅿️ {selectedParking}</h2>
+                
+                {parkingVehicles.length === 0 ? (
+                  <div className="no-vehicles">Aucun véhicule dans ce parking</div>
+                ) : (
+                  <table className="vehicle-table">
+                    <thead>
+                      <tr>
+                        <th>Plaque</th>
+                        <th>Type</th>
+                        <th>Durée</th>
+                        <th>Temps restant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parkingVehicles.map((vehicle) => (
+                        <tr key={vehicle.id}>
+                          <td className="licence-plate">{vehicle.licencePlate}</td>
+                          <td>{getVehicleLabel(vehicle.vehicleType)}</td>
+                          <td>{vehicle.durationMinutes} min</td>
+                          <td>{calculateTimeRemaining(vehicle)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Analytics */}
           <div className="analytics-grid">

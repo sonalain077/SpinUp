@@ -1,0 +1,19 @@
+{
+  "private": true,
+  "name": "park-and-see-monorepo",
+  "version": "1.0.0",
+  "description": "Park & See - Mode développement avec backend unique + frontend HMR",
+  "scripts": {
+    "backend:once:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/start-backend-once.ps1",
+    "backend:once:sh": "bash ./scripts/start-backend-once.sh",
+    "frontend": "cd frontend-react && npm run dev",
+    "dev:win": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm run backend:once:ps\" \"npm run frontend\"",
+    "dev:sh": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm run backend:once:sh\" \"npm run frontend\"",
+    "dev": "npm run dev:win",
+    "stop:backend": "powershell -Command \"$proc = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($proc) { Stop-Process -Id $proc -Force; Write-Host 'Backend stopped' } else { Write-Host 'Backend not running' }\"",
+    "clean": "cd frontend-react && rmdir /s /q node_modules build 2>nul & cd .. & cd backend && mvn clean & cd .."
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

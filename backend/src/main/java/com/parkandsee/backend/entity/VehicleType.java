@@ -6,6 +6,8 @@ package com.parkandsee.backend.entity;
 public enum VehicleType {
     CAR("Voiture"),
     MOTORCYCLE("Moto"),
+    VAN("Camionnette"),
+    TRUCK("Camion"),
     BICYCLE("Vélo"),
     ELECTRIC_SCOOTER("Trottinette électrique");
 

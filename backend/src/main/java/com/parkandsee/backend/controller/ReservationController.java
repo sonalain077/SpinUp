@@ -3,7 +3,9 @@ package com.parkandsee.backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,5 +27,15 @@ public class ReservationController {
     public ResponseEntity<List<ReservationEntity>> list() {
         List<ReservationEntity> all = reservationRepository.findAll();
         return ResponseEntity.ok(all);
+    }
+
+    // Delete a reservation (for justified/regularized excess)
+    @DeleteMapping("/reservations/{id}")
+    public ResponseEntity<Void> deleteReservation(@PathVariable String id) {
+        if (reservationRepository.existsById(id)) {
+            reservationRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

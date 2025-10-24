@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getVehicleTypeOptions } from '../lib/vehicleTypes';
 import './ParkingReservation.css';
 
 const ParkingReservation = () => {
@@ -53,7 +54,8 @@ const ParkingReservation = () => {
   // Initialisation de la date par défaut (heure actuelle + 30 minutes minimum)
   useEffect(() => {
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 30); // 30 minutes dans le futur minimum
+    // Pour la démo : commencer immédiatement (pas de +30 min)
+    // now.setMinutes(now.getMinutes() + 30); // Désactivé pour permettre des démonstrations immédiates
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -70,7 +72,7 @@ const ParkingReservation = () => {
       validateLicencePlate(formData.licencePlate) &&
       formData.vehicleType &&
       formData.startAt &&
-      formData.durationMinutes &&
+      formData.durationMinutes >= 0 && // Accepter 0 pour mode démo
       formData.address;
     
     setIsFormValid(isValid);
@@ -255,17 +257,22 @@ const ParkingReservation = () => {
       
       console.log('📅 Date finale formatée pour backend:', startAtValue);
       
+      // Gestion spéciale pour "Démo infraction" (durée = 1 minute pour faciliter les tests)
+      const isDemoInfraction = parseInt(formData.durationMinutes) === 0;
+      const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes); // 1 min pour démo
+      
       const reservationData = {
         licencePlate: formData.licencePlate,
         vehicleType: formData.vehicleType,
         startAt: startAtValue,
-        durationMinutes: parseInt(formData.durationMinutes),
+        durationMinutes: finalDuration,
         address: formData.address,
         paymentToken: 'pending-payment' // Token temporaire en attente de paiement
       };
       
       // Validation des données avant envoi
       console.log('🔍 VALIDATION COMPLETE DES DONNEES:');
+      console.log('- Mode:', isDemoInfraction ? '🎬 DEMO INFRACTION' : 'Normal');
       console.log('- Plaque:', `"${reservationData.licencePlate}"`);
       console.log('- Type véhicule:', `"${reservationData.vehicleType}"`);
       console.log('- Date:', `"${reservationData.startAt}"`);
@@ -282,7 +289,8 @@ const ParkingReservation = () => {
       if (!reservationData.startAt || reservationData.startAt.trim() === '') {
         throw new Error('Date de début vide ou invalide');
       }
-      if (!reservationData.durationMinutes || reservationData.durationMinutes <= 0 || isNaN(reservationData.durationMinutes)) {
+      // Autoriser 0.167 pour démo infraction
+      if (isNaN(reservationData.durationMinutes) || reservationData.durationMinutes < 0) {
         throw new Error(`Durée invalide: ${reservationData.durationMinutes}`);
       }
       if (!reservationData.address || reservationData.address.trim() === '') {
@@ -364,10 +372,11 @@ const ParkingReservation = () => {
             required
           >
             <option value="">-- Sélectionnez un type de véhicule --</option>
-            <option value="2_roues">2 roues (moto, scooter)</option>
-            <option value="voiture">Voiture</option>
-            <option value="camionnette">Camionnette</option>
-            <option value="camion">Camion</option>
+            {getVehicleTypeOptions().map(option => (
+              <option key={option.value} value={option.value}>
+                {option.icon} {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -398,6 +407,7 @@ const ParkingReservation = () => {
             required
           >
             <option value="">-- Sélectionnez une durée --</option>
+            <option value="0">🎬 Démo infraction (1 minute)</option>
             <option value="30">30 min</option>
             <option value="60">1h</option>
             <option value="90">1h 30min</option>
@@ -439,9 +449,11 @@ const ParkingReservation = () => {
             required
           >
             <option value="">-- Sélectionnez un parking --</option>
-            <option value="Parking Centre Ville">Parking Centre Ville</option>
-            <option value="Parking Souterrain">Parking Souterrain</option>
-            <option value="Parking Mairie">Parking Mairie</option>
+            <option value="Parking Centre Ville">🏙️ Parking Centre Ville</option>
+            <option value="Parking Gare">🚉 Parking Gare</option>
+            <option value="Parking République">🏢 Parking République</option>
+            <option value="Parking Liberté">🌳 Parking Liberté</option>
+            <option value="Parking Mairie">🏛️ Parking Mairie</option>
           </select>
         </div>
 

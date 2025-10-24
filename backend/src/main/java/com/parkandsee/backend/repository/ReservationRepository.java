@@ -15,6 +15,11 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
     List<ReservationEntity> findByStatus(ReservationStatus status);
     
     /**
+     * Compte le nombre de réservations par statut
+     */
+    long countByStatus(ReservationStatus status);
+    
+    /**
      * Trouve les réservations par plaque d'immatriculation et statut
      */
     List<ReservationEntity> findByLicencePlateAndStatus(String licencePlate, ReservationStatus status);
