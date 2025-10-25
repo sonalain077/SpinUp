@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
+import MesPlaces from './components/MesPlaces';
 import AgentDashboard from './components/agent/AgentDashboard';
 import AgentOverdueControl from './components/AgentOverdueControl';
 import Payment from './components/Payment';
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/parking-reservation" element={<ParkingReservation />} />
           <Route path="/reservation" element={<ParkingReservation />} />
+          <Route path="/mes-places" element={<MesPlaces />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/login" element={<Login />} />

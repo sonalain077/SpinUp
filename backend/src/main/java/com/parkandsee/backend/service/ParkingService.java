@@ -38,12 +38,14 @@ public class ParkingService {
         e.setStartAt(request.getStartAt());
         e.setDurationMinutes(request.getDurationMinutes());
         e.setAddress(request.getAddress());
+        e.setPaymentAmount(request.getPaymentAmount());
         e.setStatus(ReservationStatus.ACTIVE);
         e.setCreatedAt(LocalDateTime.now());
 
-        reservationRepository.save(e);
+        ReservationEntity saved = reservationRepository.save(e);
 
-        return new PaymentResponse(true, "Reservation confirmed", id);
+        return new PaymentResponse(true, "Reservation confirmed", id, 
+                                 saved.getPaymentAmount(), saved.getHourlyRate());
     }
 
     private boolean simulatePayment(String token) {

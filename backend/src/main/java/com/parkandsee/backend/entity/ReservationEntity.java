@@ -46,6 +46,10 @@ public class ReservationEntity {
     @Column(nullable = false)
     private String address;
 
+    @Positive(message = "Le montant doit être positif")
+    @Column(name = "payment_amount")
+    private Double paymentAmount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus status = ReservationStatus.ACTIVE;
@@ -61,12 +65,13 @@ public class ReservationEntity {
     public ReservationEntity() {}
 
     public ReservationEntity(String licencePlate, VehicleType vehicleType, 
-                           LocalDateTime startAt, Integer durationMinutes, String address) {
+                           LocalDateTime startAt, Integer durationMinutes, String address, Double paymentAmount) {
         this.licencePlate = licencePlate;
         this.vehicleType = vehicleType;
         this.startAt = startAt;
         this.durationMinutes = durationMinutes;
         this.address = address;
+        this.paymentAmount = paymentAmount;
     }
 
     /**
@@ -187,5 +192,39 @@ public class ReservationEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Double getPaymentAmount() {
+        return paymentAmount;
+    }
+
+    public void setPaymentAmount(Double paymentAmount) {
+        this.paymentAmount = paymentAmount;
+    }
+
+    /**
+     * Calcule le tarif par minute basé sur le montant payé et la durée
+     * @return tarif par minute en euros
+     */
+    public Double getHourlyRate() {
+        if (paymentAmount == null || durationMinutes == null || durationMinutes == 0) {
+            return 0.0;
+        }
+        return (paymentAmount / durationMinutes) * 60; // Convertir en tarif horaire
+    }
+
+    /**
+     * Calcule le montant supplémentaire dû en cas de dépassement
+     * Utilise le même tarif par minute que le paiement initial
+     * @return montant supplémentaire dû
+     */
+    public Double getOverdueAmount() {
+        long overdueMinutes = getOverdueMinutes();
+        if (overdueMinutes <= 0 || paymentAmount == null || durationMinutes == null || durationMinutes == 0) {
+            return 0.0;
+        }
+        
+        double ratePerMinute = paymentAmount / durationMinutes;
+        return overdueMinutes * ratePerMinute;
     }
 }

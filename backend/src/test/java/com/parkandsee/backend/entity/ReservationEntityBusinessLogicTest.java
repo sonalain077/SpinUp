@@ -287,7 +287,7 @@ class ReservationEntityBusinessLogicTest {
         
         // When
         ReservationEntity newReservation = new ReservationEntity(
-            "XY-789-ZZ", VehicleType.MOTORCYCLE, startTime, 120, "Avenue de la République"
+            "XY-789-ZZ", VehicleType.MOTORCYCLE, startTime, 120, "Avenue de la République", 3.00
         );
 
         // Then

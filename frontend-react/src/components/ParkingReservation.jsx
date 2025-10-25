@@ -261,12 +261,16 @@ const ParkingReservation = () => {
       const isDemoInfraction = parseInt(formData.durationMinutes) === 0;
       const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes); // 1 min pour démo
       
+      // Calcul du prix total AVANT la création de l'objet
+      const totalPrice = calculatePrice(finalDuration);
+      
       const reservationData = {
         licencePlate: formData.licencePlate,
         vehicleType: formData.vehicleType,
         startAt: startAtValue,
         durationMinutes: finalDuration,
         address: formData.address,
+        paymentAmount: totalPrice, // ✅ Ajout du montant requis
         paymentToken: 'pending-payment' // Token temporaire en attente de paiement
       };
       
@@ -304,9 +308,6 @@ const ParkingReservation = () => {
       
       const response = await reserveParking(reservationData);
       console.log('✅ Pré-réservation créée:', response);
-      
-      // Calcul du prix total
-      const totalPrice = calculatePrice(reservationData.durationMinutes);
       
       // Redirection vers la page de paiement avec les détails de la réservation
       navigate('/payment', { 
@@ -473,6 +474,17 @@ const ParkingReservation = () => {
           )}
         </button>
       </form>
+
+      {/* Bouton Voir mes places */}
+      <div className="secondary-actions">
+        <button
+          type="button"
+          className="secondary-btn"
+          onClick={() => navigate('/mes-places')}
+        >
+          📋 Voir mes places
+        </button>
+      </div>
 
       {/* Affichage des résultats */}
       {result && (
