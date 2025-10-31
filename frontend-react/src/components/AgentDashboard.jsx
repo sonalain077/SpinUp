@@ -432,9 +432,19 @@ const AgentDashboard = () => {
   return (
     <div className="agent-dashboard">
       <div className="dashboard-container">
-        <button onClick={handleBackToHome} className="back-button">
-          ← Accueil
-        </button>
+        {/* Bouton retour amélioré */}
+        <div className="top-navigation">
+          <button onClick={handleBackToHome} className="back-button">
+            <svg className="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="back-text">Retour à l'accueil</span>
+          </button>
+          <div className="dashboard-badge">
+            <span className="badge-icon">🚔</span>
+            <span className="badge-text">Dashboard Agent</span>
+          </div>
+        </div>
 
         <header className="dashboard-header">
           <h1>🚔 Contrôle Agent</h1>
