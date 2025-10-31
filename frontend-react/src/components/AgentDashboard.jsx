@@ -46,8 +46,8 @@ const AgentDashboard = () => {
       setLoading(true);
       const [overdueRes, occupationRes, zonesRes, historyRes] = await Promise.all([
         fetch(`${API_BASE_URL}/agent/overdue`),
-        fetch(`${API_BASE_URL}/agent/overdue/occupation`),
-        fetch(`${API_BASE_URL}/agent/overdue/occupation/by-zone`),
+        fetch(`${API_BASE_URL}/agent/occupation`),
+        fetch(`${API_BASE_URL}/agent/occupation/by-zone`),
         fetch(`${API_BASE_URL}/agent/overdue/history`)
       ]);
 
@@ -190,7 +190,7 @@ const AgentDashboard = () => {
   const handleParkingClick = async (parkingName) => {
     setSelectedParking(parkingName);
     try {
-      const response = await fetch(`${API_BASE_URL}/agent/overdue/parking/${encodeURIComponent(parkingName)}/vehicles`);
+      const response = await fetch(`${API_BASE_URL}/agent/parking/${encodeURIComponent(parkingName)}/vehicles`);
       if (response.ok) {
         const vehicles = await response.json();
         setParkingVehicles(vehicles);
