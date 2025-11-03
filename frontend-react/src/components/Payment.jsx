@@ -121,11 +121,33 @@ const Payment = () => {
       console.log('Données:', paymentData);
       console.log('Montant:', amount);
 
-      // Redirection vers la page de confirmation
+      // 🔥 APPEL API POUR CRÉER LA RÉSERVATION DANS LA BASE DE DONNÉES
+      console.log('📤 Envoi de la réservation au backend...');
+      const response = await fetch('http://localhost:8081/api/parking/reserve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(reservationData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Erreur backend:', errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
+      }
+
+      const backendResponse = await response.json();
+      console.log('✅ Réservation créée dans le backend:', backendResponse);
+      console.log('🆔 ID de réservation retourné:', backendResponse.reservationId);
+      console.log('📦 Objet complet backendResponse:', JSON.stringify(backendResponse, null, 2));
+
+      // Redirection vers la page de confirmation avec la VRAIE réponse du backend
       navigate('/confirmation', {
         state: {
           reservationData,
-          reservationResponse,
+          reservationResponse: backendResponse, // Utiliser la vraie réponse du backend
           amount,
           paymentMethod,
           success: true

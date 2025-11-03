@@ -183,7 +183,9 @@ const ParkingReservation = () => {
     return value ? 'valid' : 'invalid';
   };
 
+  // ⚠️ FONCTION DÉSACTIVÉE - La réservation est maintenant créée dans Payment.jsx après le paiement
   // Service API pour communiquer avec le backend
+  /*
   const reserveParking = async (data) => {
     console.log('🚀 DEBUT REQUETE API');
     console.log('📍 URL:', 'http://localhost:8081/api/parking/reserve');
@@ -218,6 +220,8 @@ const ParkingReservation = () => {
       throw error;
     }
   };
+  */
+
 
   // Soumission du formulaire
   const handleSubmit = async (e) => {
@@ -303,17 +307,16 @@ const ParkingReservation = () => {
       
       console.log('✅ Toutes les validations passées');
       
-      // Création d'une pré-réservation avant le paiement
-      console.log('🚀 Création de la pré-réservation:', reservationData);
+      // Préparation des données pour le paiement (SANS créer la réservation)
+      console.log('� Préparation des données pour le paiement:', reservationData);
       
-      const response = await reserveParking(reservationData);
-      console.log('✅ Pré-réservation créée:', response);
+      // ⚠️ NOTE: La réservation sera créée APRÈS le paiement dans Payment.jsx
+      // On ne fait plus l'appel API ici pour éviter la duplication
       
       // Redirection vers la page de paiement avec les détails de la réservation
       navigate('/payment', { 
         state: { 
           reservationData: reservationData,
-          reservationResponse: response,
           amount: totalPrice,
           formattedAmount: `${totalPrice}€`
         } 

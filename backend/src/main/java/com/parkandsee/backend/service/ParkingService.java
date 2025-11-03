@@ -44,7 +44,7 @@ public class ParkingService {
 
         ReservationEntity saved = reservationRepository.save(e);
 
-        return new PaymentResponse(true, "Reservation confirmed", id, 
+        return new PaymentResponse(true, "Reservation confirmed", saved.getId(), 
                                  saved.getPaymentAmount(), saved.getHourlyRate());
     }
 

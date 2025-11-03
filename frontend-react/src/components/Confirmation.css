@@ -72,7 +72,7 @@
   color: #155724;
 }
 
-/* Informations de r├®servation */
+/* Informations de réservation */
 .reservation-info {
   background: #f7fafc;
   border-radius: 15px;
@@ -85,6 +85,53 @@
   font-size: 1.3rem;
   color: #333;
   text-align: center;
+}
+
+/* ID de réservation mis en avant */
+.reservation-id-highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.reservation-id-highlight .id-label {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  opacity: 0.95;
+}
+
+.reservation-id-highlight .id-value {
+  background: white;
+  color: #667eea;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin: 10px 0;
+  word-break: break-all;
+  cursor: pointer;
+  user-select: all;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reservation-id-highlight .id-value:hover {
+  background: #f0f4ff;
+  transform: scale(1.02);
+}
+
+.reservation-id-highlight .id-help {
+  color: white;
+  font-size: 0.85rem;
+  margin-top: 10px;
+  opacity: 0.9;
+  font-style: italic;
 }
 
 /* Grille d'informations */

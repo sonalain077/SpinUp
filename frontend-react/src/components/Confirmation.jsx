@@ -10,6 +10,11 @@ const Confirmation = () => {
   // Récupération des données de la réservation et du paiement
   const { reservationData, reservationResponse, amount, paymentMethod, success } = location.state || {};
 
+  // 🔍 LOGS DE DEBUG
+  console.log('🎯 Confirmation - État reçu:', location.state);
+  console.log('🆔 reservationResponse:', reservationResponse);
+  console.log('🆔 reservationResponse?.reservationId:', reservationResponse?.reservationId);
+
   const handleBackToHome = () => {
     navigate('/');
   };
@@ -63,12 +68,16 @@ const Confirmation = () => {
             <div className="reservation-info">
               <h3>📋 Détails de votre réservation</h3>
               
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="info-label">🆔 Numéro de réservation :</span>
-                  <span className="info-value">{reservationResponse?.reservationId || 'R-' + Date.now()}</span>
+              {/* ID de réservation mis en avant */}
+              <div className="reservation-id-highlight">
+                <div className="id-label">🆔 Numéro de réservation (conservez-le pour retrouver votre place) :</div>
+                <div className="id-value" title="Cliquez pour copier">
+                  {reservationResponse?.reservationId || 'R-' + Date.now()}
                 </div>
-
+                <div className="id-help">💡 Utilisez cet identifiant dans "Voir mes places" pour consulter votre réservation</div>
+              </div>
+              
+              <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">🚗 Véhicule :</span>
                   <span className="info-value">{reservationData.licencePlate}</span>

@@ -141,7 +141,7 @@ const MesPlaces = () => {
                 id="reservationId"
                 value={reservationId}
                 onChange={(e) => setReservationId(e.target.value)}
-                placeholder="Exemple: res-001, res-abc-123..."
+                placeholder="Exemple: d6185945-ea73-4587-a9e6-3910a1940bf8"
                 className="search-input"
                 disabled={loading}
               />
@@ -166,7 +166,8 @@ const MesPlaces = () => {
           {/* Message d'aide */}
           <div className="help-message">
             💡 <strong>Conseil :</strong> Votre ID de réservation vous a été communiqué lors de votre réservation. 
-            Il commence généralement par "res-" suivi de chiffres ou lettres.
+            Il s'agit d'un identifiant unique au format UUID (par exemple : d6185945-ea73-4587-a9e6-3910a1940bf8).
+            Vous le trouverez sur votre page de confirmation après avoir effectué votre réservation.
           </div>
         </div>
 
