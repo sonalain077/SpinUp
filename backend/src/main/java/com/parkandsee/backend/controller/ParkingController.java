@@ -1,15 +1,19 @@
 package com.parkandsee.backend.controller;
 
+import java.util.Optional;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.parkandsee.backend.dto.ExtensionRequest;
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
+import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.service.ParkingService;
 
 import jakarta.validation.Valid;
@@ -53,6 +57,45 @@ public class ParkingController {
     @GetMapping(value = "/status", produces = "application/json")
     public ResponseEntity<String> status() {
         return ResponseEntity.ok("{\"status\": \"OK\", \"service\": \"Park & See Backend\"}");
+    }
+    
+    /**
+     * Rechercher une réservation active par plaque d'immatriculation ou ID de réservation
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ReservationEntity> searchReservation(
+            @RequestParam(value = "licencePlate", required = false) String licencePlate,
+            @RequestParam(value = "reservationId", required = false) String reservationId) {
+        
+        // Vérifier qu'au moins un paramètre est fourni
+        if ((licencePlate == null || licencePlate.trim().isEmpty()) && 
+            (reservationId == null || reservationId.trim().isEmpty())) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        Optional<ReservationEntity> reservation;
+        
+        // Recherche par ID de réservation en priorité
+        if (reservationId != null && !reservationId.trim().isEmpty()) {
+            reservation = parkingService.findActiveReservationById(reservationId.trim());
+        } else {
+            reservation = parkingService.findActiveReservationByLicencePlate(licencePlate.trim());
+        }
+        
+        if (reservation.isPresent()) {
+            return ResponseEntity.ok(reservation.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    /**
+     * Étendre une réservation existante avec paiement
+     */
+    @PostMapping("/extend")
+    public ResponseEntity<PaymentResponse> extendReservation(@Valid @RequestBody ExtensionRequest request) {
+        PaymentResponse response = parkingService.extendReservation(request);
+        return ResponseEntity.ok(response);
     }
     
 
