@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: parkandsee
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
+      TZ: Europe/Paris
     ports:
       - "5432:5432"
     volumes:
@@ -33,6 +34,8 @@ services:
       SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
       # Port
       SERVER_PORT: 8081
+      # Timezone
+      TZ: Europe/Paris
     ports:
       - "8081:8081"
     depends_on:

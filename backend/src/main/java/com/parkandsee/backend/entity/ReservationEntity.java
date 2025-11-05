@@ -105,8 +105,18 @@ public class ReservationEntity {
         LocalDateTime endAt = getEndAt();
         LocalDateTime now = LocalDateTime.now();
         
+        // DEBUG: Afficher les valeurs pour comprendre le problème
+        System.out.println("🔍 DEBUG getOverdueMinutes() for " + licencePlate);
+        System.out.println("  startAt: " + startAt);
+        System.out.println("  durationMinutes: " + durationMinutes);
+        System.out.println("  endAt (calculated): " + endAt);
+        System.out.println("  now: " + now);
+        
         // Utiliser ChronoUnit pour un calcul plus précis et fiable
-        return ChronoUnit.MINUTES.between(endAt, now);
+        long overdueMinutes = ChronoUnit.MINUTES.between(endAt, now);
+        System.out.println("  overdueMinutes (result): " + overdueMinutes);
+        
+        return overdueMinutes;
     }
 
     /**

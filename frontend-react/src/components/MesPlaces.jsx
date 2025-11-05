@@ -122,6 +122,21 @@ const MesPlaces = () => {
     setExitMessage(null);
 
     try {
+      // D'abord récupérer les données à jour de la réservation
+      const searchResponse = await fetch(`http://localhost:8081/api/parking/search?reservationId=${reservation.id}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (searchResponse.ok) {
+        const updatedReservation = await searchResponse.json();
+        // Mettre à jour la réservation avec les données actuelles
+        Object.assign(reservation, updatedReservation);
+      }
+
+      // Ensuite vérifier la sortie
       const response = await fetch(`http://localhost:8081/api/parking/check-exit?reservationId=${reservation.id}`, {
         method: 'GET',
         headers: {
@@ -313,6 +328,16 @@ const MesPlaces = () => {
                   {reservation.status === 'ACTIVE' && (
                     <div className="time-status">
                       {(() => {
+                        // Use backend-provided overdueMinutes if available (authoritative source)
+                        if (reservation.overdueMinutes !== undefined && reservation.overdueMinutes > 0) {
+                          return (
+                            <div className="time-indicator overdue">
+                              Dépassement: {reservation.overdueMinutes} minute(s)
+                            </div>
+                          );
+                        }
+                        
+                        // Otherwise calculate time status for active/future reservations
                         const timeStatus = calculateTimeStatus(reservation.startAt, reservation.durationMinutes);
                         return (
                           <div className={`time-indicator ${timeStatus.className}`}>
