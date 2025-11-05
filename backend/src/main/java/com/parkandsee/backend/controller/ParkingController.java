@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.parkandsee.backend.dto.ExtensionRequest;
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
+import com.parkandsee.backend.dto.ExitResponse;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.service.ParkingService;
 
@@ -98,5 +99,30 @@ public class ParkingController {
         return ResponseEntity.ok(response);
     }
     
+    /**
+     * Vérifier si un véhicule peut sortir du parking
+     */
+    @GetMapping("/check-exit")
+    public ResponseEntity<ExitResponse> checkExit(@RequestParam("reservationId") String reservationId) {
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        ExitResponse response = parkingService.checkExit(reservationId.trim());
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Confirmer la sortie du parking (supprime la réservation)
+     */
+    @PostMapping("/confirm-exit")
+    public ResponseEntity<ExitResponse> confirmExit(@RequestParam("reservationId") String reservationId) {
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        ExitResponse response = parkingService.confirmExit(reservationId.trim());
+        return ResponseEntity.ok(response);
+    }
 
 }

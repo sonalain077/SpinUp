@@ -3,6 +3,7 @@ package com.parkandsee.backend.service;
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
 import com.parkandsee.backend.dto.ExtensionRequest;
+import com.parkandsee.backend.dto.ExitResponse;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.entity.VehicleType;
 import com.parkandsee.backend.entity.ReservationStatus;
@@ -135,4 +136,78 @@ public class ParkingService {
         int halfHours = (int) Math.ceil(extensionMinutes / 30.0);
         return halfHours * pricePerHalfHour;
     }
+
+    /**
+     * Vérifier si un véhicule peut quitter le parking
+     * @param reservationId ID de la réservation
+     * @return ExitResponse avec autorisation ou refus de sortie
+     */
+    public ExitResponse checkExit(String reservationId) {
+        Optional<ReservationEntity> reservationOpt = reservationRepository.findById(reservationId);
+        
+        if (reservationOpt.isEmpty()) {
+            return new ExitResponse(false, "Réservation non trouvée", false, 0L, 0.0, null);
+        }
+
+        ReservationEntity reservation = reservationOpt.get();
+        
+        // Vérifier si la réservation est en dépassement
+        if (reservation.isOverdue()) {
+            long overdueMinutes = reservation.getOverdueMinutes();
+            double overdueAmount = reservation.getOverdueAmount();
+            
+            return ExitResponse.denied(
+                String.format("Sortie refusée : Vous avez dépassé votre durée de stationnement de %d minutes. " +
+                             "Veuillez régulariser votre situation (%.2f€) avant de quitter le parking.", 
+                             overdueMinutes, overdueAmount),
+                overdueMinutes,
+                overdueAmount,
+                reservationId
+            );
+        }
+        
+        // Autoriser la sortie
+        return ExitResponse.allowed(
+            "Sortie autorisée. Merci d'avoir utilisé Park & See !",
+            reservationId
+        );
+    }
+
+    /**
+     * Confirmer la sortie du parking et supprimer la réservation
+     * @param reservationId ID de la réservation
+     * @return ExitResponse confirmant la suppression
+     */
+    @Transactional
+    public ExitResponse confirmExit(String reservationId) {
+        Optional<ReservationEntity> reservationOpt = reservationRepository.findById(reservationId);
+        
+        if (reservationOpt.isEmpty()) {
+            return new ExitResponse(false, "Réservation non trouvée", false, 0L, 0.0, null);
+        }
+
+        ReservationEntity reservation = reservationOpt.get();
+        
+        // Vérifier à nouveau le dépassement (sécurité)
+        if (reservation.isOverdue()) {
+            long overdueMinutes = reservation.getOverdueMinutes();
+            double overdueAmount = reservation.getOverdueAmount();
+            
+            return ExitResponse.denied(
+                "Sortie refusée : Vous devez régulariser votre infraction avant de quitter.",
+                overdueMinutes,
+                overdueAmount,
+                reservationId
+            );
+        }
+        
+        // Supprimer la réservation
+        reservationRepository.delete(reservation);
+        
+        return ExitResponse.allowed(
+            "Véhicule sorti avec succès. Bonne route !",
+            reservationId
+        );
+    }
 }
+

@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "reservations", indexes = {
@@ -102,7 +103,10 @@ public class ReservationEntity {
             return 0;
         }
         LocalDateTime endAt = getEndAt();
-        return Duration.between(endAt, LocalDateTime.now()).toMinutes();
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Utiliser ChronoUnit pour un calcul plus précis et fiable
+        return ChronoUnit.MINUTES.between(endAt, now);
     }
 
     /**

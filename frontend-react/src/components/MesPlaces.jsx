@@ -9,6 +9,9 @@ const MesPlaces = () => {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [exitLoading, setExitLoading] = useState(false);
+  const [exitMessage, setExitMessage] = useState(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Fonction pour rechercher une réservation
   const handleSearch = async (e) => {
@@ -111,6 +114,91 @@ const MesPlaces = () => {
       case 'REGULARISE': return '✔️';
       default: return '❓';
     }
+  };
+
+  // Fonction pour vérifier si on peut quitter le parking
+  const handleCheckExit = async () => {
+    setExitLoading(true);
+    setExitMessage(null);
+
+    try {
+      const response = await fetch(`http://localhost:8081/api/parking/check-exit?reservationId=${reservation.id}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la vérification de sortie');
+      }
+
+      const data = await response.json();
+      
+      if (data.canExit) {
+        // Pas d'infraction - demander confirmation
+        setShowExitConfirm(true);
+        setExitMessage({ type: 'info', text: data.message });
+      } else {
+        // Infraction détectée - bloquer la sortie
+        setExitMessage({ 
+          type: 'error', 
+          text: data.message,
+          overdueMinutes: data.overdueMinutes,
+          overdueAmount: data.overdueAmount
+        });
+      }
+
+    } catch (err) {
+      console.error('❌ Erreur:', err);
+      setExitMessage({ type: 'error', text: 'Erreur lors de la vérification de sortie' });
+    } finally {
+      setExitLoading(false);
+    }
+  };
+
+  // Fonction pour confirmer la sortie
+  const handleConfirmExit = async () => {
+    setExitLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${reservation.id}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la confirmation de sortie');
+      }
+
+      const data = await response.json();
+      
+      if (data.canExit) {
+        // Succès - afficher message et rediriger
+        setExitMessage({ type: 'success', text: data.message });
+        setTimeout(() => {
+          navigate('/parking-reservation');
+        }, 2000);
+      } else {
+        // Ne devrait pas arriver si check-exit a été fait
+        setExitMessage({ type: 'error', text: data.message });
+      }
+
+    } catch (err) {
+      console.error('❌ Erreur:', err);
+      setExitMessage({ type: 'error', text: 'Erreur lors de la confirmation de sortie' });
+    } finally {
+      setExitLoading(false);
+      setShowExitConfirm(false);
+    }
+  };
+
+  // Fonction pour annuler la sortie
+  const handleCancelExit = () => {
+    setShowExitConfirm(false);
+    setExitMessage(null);
   };
 
   return (
@@ -264,6 +352,65 @@ const MesPlaces = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Bouton Quitter le parking */}
+              {reservation.status === 'ACTIVE' && !showExitConfirm && (
+                <div className="exit-section">
+                  <button
+                    className="exit-button"
+                    onClick={handleCheckExit}
+                    disabled={exitLoading}
+                  >
+                    {exitLoading ? '⏳ Vérification...' : '🚪 Quitter le parking'}
+                  </button>
+                </div>
+              )}
+
+              {/* Message de sortie */}
+              {exitMessage && (
+                <div className={`exit-message ${exitMessage.type}`}>
+                  {exitMessage.type === 'error' && exitMessage.overdueMinutes && (
+                    <div className="overdue-details">
+                      <p><strong>⚠️ Infraction détectée</strong></p>
+                      <p>{exitMessage.text}</p>
+                      <p className="overdue-info">
+                        💰 Montant dû : <strong>{exitMessage.overdueAmount.toFixed(2)}€</strong>
+                      </p>
+                      <button 
+                        className="regularize-button"
+                        onClick={() => navigate('/rallonger-stationnement')}
+                      >
+                        📝 Régulariser maintenant
+                      </button>
+                    </div>
+                  )}
+                  {exitMessage.type !== 'error' && <p>{exitMessage.text}</p>}
+                </div>
+              )}
+
+              {/* Confirmation de sortie */}
+              {showExitConfirm && (
+                <div className="exit-confirmation">
+                  <h3>⚠️ Confirmer la sortie</h3>
+                  <p>Êtes-vous sûr de vouloir quitter le parking ? Cette action supprimera votre réservation.</p>
+                  <div className="confirmation-buttons">
+                    <button 
+                      className="cancel-button"
+                      onClick={handleCancelExit}
+                      disabled={exitLoading}
+                    >
+                      ❌ Annuler
+                    </button>
+                    <button 
+                      className="confirm-button"
+                      onClick={handleConfirmExit}
+                      disabled={exitLoading}
+                    >
+                      {exitLoading ? '⏳ Traitement...' : '✅ Confirmer la sortie'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

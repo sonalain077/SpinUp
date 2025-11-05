@@ -380,3 +380,175 @@
     margin-right: 0;
   }
 }
+
+/* Section Sortie du parking */
+.exit-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e0e0e0;
+  text-align: center;
+}
+
+.exit-button {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: none;
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.exit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+}
+
+.exit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Messages de sortie */
+.exit-message {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.exit-message.info {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+  color: #1565c0;
+}
+
+.exit-message.success {
+  background: #e8f5e9;
+  border: 2px solid #4caf50;
+  color: #2e7d32;
+}
+
+.exit-message.error {
+  background: #ffebee;
+  border: 2px solid #f44336;
+  color: #c62828;
+}
+
+.overdue-details {
+  text-align: center;
+}
+
+.overdue-details p {
+  margin: 0.5rem 0;
+}
+
+.overdue-info {
+  font-size: 1.2rem;
+  margin: 1rem 0 !important;
+  padding: 1rem;
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: 8px;
+}
+
+.regularize-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 0.875rem 2rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.regularize-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Confirmation de sortie */
+.exit-confirmation {
+  margin-top: 1.5rem;
+  padding: 2rem;
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.exit-confirmation h3 {
+  margin-top: 0;
+  color: #e65100;
+  font-size: 1.3rem;
+}
+
+.exit-confirmation p {
+  color: #f57c00;
+  margin: 1rem 0 1.5rem 0;
+  line-height: 1.6;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.cancel-button, .confirm-button {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  background: #f44336;
+  color: white;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.cancel-button:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+.confirm-button {
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.confirm-button:hover {
+  background: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.cancel-button:disabled, .confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
