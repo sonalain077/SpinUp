@@ -23,12 +23,17 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions().disable()) // Pour la console H2
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/parking/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/agent/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+                // Autoriser tous les endpoints publics
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/parking/**").permitAll()
+                .requestMatchers("/api/agent/**").permitAll()
+                .requestMatchers("/api/reservations/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/error").permitAll()
+                // Tout le reste nécessite une authentification
                 .anyRequest().authenticated()
             );
 

@@ -4,53 +4,64 @@ Projet Capgemini - Modernisation de la gestion du stationnement dans une grande 
 
 ## 🚀 Démarrage Rapide
 
+### Scripts de Lancement Automatiques
+
+Utilisez les scripts PowerShell pour un démarrage simplifié :
+
+```powershell
+# Lancement rapide backend + frontend
+.\start-app.ps1
+
+# Arrêt des services
+.\stop-app.ps1
+
+# Tests automatisés
+.\run-tests.ps1
+```
+
 ### Prérequis
 
-1. **Docker Desktop** (inclut Docker Compose)
-   - **[Télécharger Docker Desktop](https://www.docker.com/products/docker-desktop/)**
-   - Installer et lancer l'application
-   - Attendre que Docker soit prêt (icône verte dans la barre des tâches)
+1. **Java 23** et **Maven 3.9+**
+   - Java : https://jdk.java.net/
+   - Maven : https://maven.apache.org/
 
-2. **Node.js 16+** pour le frontend
+2. **Node.js 18+** pour le frontend
    - Télécharger : https://nodejs.org/
 
-### Installation en 3 étapes
+### Installation manuelle
 
-#### 1️⃣ Lancer le Backend avec Docker Compose
+#### 1️⃣ Lancer le Backend Spring Boot
 
 ```powershell
 # Depuis la racine du projet
-docker compose up -d --build
+cd backend
+mvn spring-boot:run
 ```
 
-Cela démarre :
-- ✅ PostgreSQL (port 5432)
-- ✅ Backend Spring Boot (port 8081)
+Le backend démarre sur : http://localhost:8081
 
-**Vérification** : http://localhost:8081/api/agent/overdue/stats
+**Vérification** : http://localhost:8081/api/parking/status
 
 #### 2️⃣ Lancer le Frontend React
 
 ```powershell
 cd frontend-react
 npm install
-npm start
+npm run dev
 ```
 
-Le frontend démarre sur : http://localhost:3000
+Le frontend démarre sur : http://localhost:5174
 
 #### 3️⃣ Accéder à l'application
 
-- **Interface Usager** : http://localhost:3000
-- **Dashboard Agent** : http://localhost:3000/agent
+- **Interface Usager** : http://localhost:5174
+- **Dashboard Agent** : http://localhost:5174/agent
 - **API Backend** : http://localhost:8081/api
-
----
 
 ## 📚 Documentation
 
-- **[GUIDE_LANCEMENT_DOCKER.md](./GUIDE_LANCEMENT_DOCKER.md)** - Guide complet Docker Compose
-- **[TESTS.md](./TESTS.md)** - Documentation des tests (120 tests unitaires)
+- **[TESTS.md](./TESTS.md)** - Tests automatisés complets
+- **[RESUME_TESTS.md](./RESUME_TESTS.md)** - Résumé des tests avec statistiques
 - **[PORTS.md](./PORTS.md)** - Configuration des ports
 
 ---
@@ -59,11 +70,12 @@ Le frontend démarre sur : http://localhost:3000
 
 ### Stack Technique
 
-- **Frontend** : React 18.2.0
-- **Backend** : Spring Boot 3.1.4 (Java 17)
-- **Base de données** : PostgreSQL 15
+- **Frontend** : React 18.2.0 + Vite 7.1.12
+- **Backend** : Spring Boot 3.1.4 (Java 23)
+- **Base de données** : H2 en mémoire (développement)
 - **ORM** : JPA / Hibernate
-- **Containerisation** : Docker + Docker Compose
+- **Sécurité** : Spring Security 6.x avec CORS
+- **Tests** : JUnit 5 + Mockito + Spring Boot Test
 
 ### Structure du Projet
 
@@ -72,28 +84,64 @@ SpinUp/
 ├── backend/                 # API Spring Boot
 │   ├── src/
 │   │   ├── main/java/      # Code source
-│   │   ├── test/java/      # Tests unitaires (120 tests)
+│   │   │   ├── controller/ # Controllers REST
+│   │   │   ├── service/    # Logique métier
+│   │   │   ├── entity/     # Entités JPA
+│   │   │   ├── dto/        # Data Transfer Objects
+│   │   │   ├── repository/ # Accès données
+│   │   │   ├── security/   # Configuration sécurité
+│   │   │   └── config/     # Configuration Spring
+│   │   ├── test/java/      # Tests unitaires
 │   │   └── resources/      # Configuration + data.sql
-│   ├── Dockerfile          # Image Docker backend
 │   └── pom.xml
-├── frontend-react/          # Application React
+├── frontend-react/          # Application React Vite
 │   ├── src/
 │   │   ├── components/     # Composants réutilisables
-│   │   └── pages/          # Pages (User, Agent)
-│   └── package.json
-├── scripts/                 # Scripts utilitaires
-├── docker-compose.yml       # Configuration Docker
+│   │   │   ├── AgentDashboard.js
+│   │   │   ├── ParkingReservation.js
+│   │   │   ├── RallongerStationnement.js
+│   │   │   └── ...
+│   │   └── index.js
+│   ├── package.json
+│   └── vite.config.js
+├── scripts/                 # Scripts PowerShell
+│   ├── start-app.ps1       # Lancement automatique
+│   ├── stop-app.ps1        # Arrêt des services
+│   └── run-tests.ps1       # Tests automatisés
 └── README.md
 ```
 
----
-
 ## 🎯 Fonctionnalités (Phase 1)
 
-### Interface Usager
-- Réservation de places de parking
-- Paiement en ligne
-- Suivi en temps réel
+### Interface Usager - Réservation et Extension
+
+#### 🚗 Réservation de Parking
+- **Types de véhicules** : Voiture, 2 roues, Camionnette
+- **Gestion du temps** : 
+  - Début de stationnement arrondi au quart d'heure supérieur
+  - Durée par tranches de 30 minutes (de 1h à 24h)
+  - Sélecteur personnalisé heures + minutes (0 ou 30 min)
+- **Moyens de paiement** : Carte Bleue, Lydia, PayPal
+- **Validation** : Contrôles en temps réel des données
+
+#### 🔄 Extension de Stationnement (Nouvelle Fonctionnalité)
+- **Recherche de réservation** :
+  - Par plaque d'immatriculation
+  - Par ID de réservation
+- **Extension payante** :
+  - Durée flexible (par tranches de 30 min)
+  - Paiement intégré (3 moyens de paiement)
+  - Tarification : 1,50€ par demi-heure
+- **Interface dédiée** : Boutons d'action rapide en haut de page
+- **Confirmation** : Page de récapitulatif détaillée
+
+#### 📱 Interface Utilisateur
+- **Design responsive** : Optimisé mobile et desktop
+- **Contraste amélioré** : Meilleure lisibilité des textes
+- **Actions rapides** : 
+  - "Voir mes places" 
+  - "Rallonger stationnement"
+- **Formulaires intelligents** : Validation en temps réel
 
 ### Interface Agent (Contrôleurs)
 - ✅ Dashboard avec statistiques en temps réel
@@ -102,82 +150,218 @@ SpinUp/
 - ✅ Marquage des infractions
 - ✅ Analytics (types de véhicules, zones critiques)
 
----
+### API REST Backend
+
+#### Endpoints de Parking
+- `POST /api/parking/reserve` - Créer une réservation
+- `GET /api/parking/search` - Rechercher une réservation active
+- `POST /api/parking/extend` - Étendre une réservation
+- `GET /api/parking/status` - Statut du service
+
+#### Endpoints Agent
+- `GET /api/agent/overdue` - Véhicules en infraction
+- `GET /api/agent/overdue/stats` - Statistiques temps réel
+- ✅ Contrôle du paiement
+- ✅ Marquage des infractions
+- ✅ Analytics (types de véhicules, zones critiques)
 
 ## 🛠️ Commandes Utiles
 
-### Docker Compose
+### Scripts PowerShell Automatiques
 
 ```powershell
-# Démarrer les services
-docker compose up -d
+# Démarrage complet (backend + frontend)
+.\start-app.ps1
 
-# Voir les logs
-docker compose logs -f backend
-docker compose logs -f db
+# Démarrage rapide sans tests
+.\start-quick.ps1
 
-# Arrêter les services
-docker compose down
+# Version corrigée avec gestion d'erreurs
+.\start-fixed.ps1
 
-# Reconstruire les images
-docker compose build --no-cache
+# Arrêt propre des services
+.\stop-app.ps1
 
-# Supprimer volumes (reset DB)
-docker compose down -v
+# Tests automatisés complets
+.\run-tests.ps1
+
+# Tests simplifiés
+.\run-tests-simple.ps1
 ```
 
-### Tests Backend
+### Backend Spring Boot
 
 ```powershell
 cd backend
+
+# Démarrage
+mvn spring-boot:run
+
+# Tests complets
 mvn test
+
+# Tests spécifiques
+mvn test -Dtest=ExtensionRequestTest
+mvn test -Dtest=ParkingServiceExtensionTest
+mvn test -Dtest=ParkingExtensionControllerTest
+
+# Compilation
+mvn compile
+
+# Nettoyage
+mvn clean
 ```
 
-**Résultat** : 120/120 tests passent ✅
+### Frontend React + Vite
 
----
+```powershell
+cd frontend-react
+
+# Installation des dépendances
+npm install
+
+# Démarrage en mode développement
+npm run dev
+
+# Build de production
+npm run build
+
+# Preview du build
+npm run preview
+```
+
+### Tests Backend - Détails
+
+**Suite de tests complète** :
+- ✅ Tests de validation DTO (ExtensionRequestTest)
+- ✅ Tests de service (ParkingServiceExtensionTest) 
+- ✅ Tests de contrôleur (ParkingExtensionControllerTest)
+- ✅ Tests d'intégration (ExtensionIntegrationTest)
+
+**Couverture** :
+- Validation des données d'entrée
+- Logique métier des extensions
+- Calculs de tarification
+- Gestion des erreurs
+- Endpoints REST
 
 ## 🐛 Dépannage
 
-### Docker ne démarre pas
-- Vérifier que Docker Desktop est lancé
-- Redémarrer Docker Desktop
-- Vérifier les prérequis système (WSL2 pour Windows)
+### Problèmes de Démarrage
 
-### Port déjà utilisé
+#### Backend ne démarre pas
 ```powershell
-# Libérer le port 8081 ou 5432
-docker compose down
-# Ou changer le port dans docker-compose.yml
+# Vérifier Java
+java --version
+
+# Vérifier Maven
+mvn --version
+
+# Nettoyer et recompiler
+cd backend
+mvn clean compile
+mvn spring-boot:run
 ```
 
-### Backend ne se connecte pas à PostgreSQL
+#### Frontend ne démarre pas
 ```powershell
-# Vérifier que la DB est prête
-docker compose logs db
-# Attendre le message "database system is ready to accept connections"
+# Vérifier Node.js
+node --version
+npm --version
+
+# Réinstaller les dépendances
+cd frontend-react
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
 ```
 
----
+### Problèmes de Port
+
+#### Port 8081 déjà utilisé (Backend)
+```powershell
+# Arrêter le processus utilisant le port
+netstat -ano | findstr :8081
+taskkill /PID <PID> /F
+
+# Ou changer le port dans application.properties
+server.port=8082
+```
+
+#### Port 5174 déjà utilisé (Frontend)
+```powershell
+# Vite choisira automatiquement le port suivant (5175, 5176...)
+# Ou spécifier un port dans vite.config.js
+```
+
+### Base de Données H2
+
+#### Accès à la console H2
+- URL : http://localhost:8081/h2-console
+- JDBC URL : `jdbc:h2:mem:testdb`
+- Username : `sa`
+- Password : (vide)
+
+#### Réinitialiser les données
+```powershell
+# Redémarrer le backend (H2 en mémoire se vide automatiquement)
+# Les données de test sont rechargées depuis data.sql
+```
+
+### Tests qui Échouent
+
+#### Problèmes de compilation des tests
+```powershell
+# Nettoyer et recompiler les tests
+mvn clean test-compile
+mvn test
+```
+
+#### Tests d'intégration
+```powershell
+# Exécuter les tests individuellement
+mvn test -Dtest=ExtensionRequestTest
+mvn test -Dtest=ParkingServiceExtensionTest
+```
 
 ## 👥 Équipe & Contact
 
 Projet développé par l'équipe Capgemini pour la modernisation du stationnement urbain.
 
-**Stack choisie** : Spring Boot + React + PostgreSQL + Docker  
-**Phase actuelle** : Phase 1 (Parkings publics)  
+**Stack choisie** : Spring Boot + React + Vite + H2 + Maven  
+**Phase actuelle** : Phase 1 (Parkings publics) - Fonctionnalités d'extension  
 **Statut** : En développement actif
 
 ---
 
 ## 📝 Notes de Développement
 
-- **Tests** : 120 tests unitaires couvrant controllers, services, repositories
-- **Base de données de test** : 13 réservations pré-chargées (10 en excès)
-- **API REST** : Endpoints documentés dans GUIDE_LANCEMENT_DOCKER.md
-- **Configuration** : Variables d'environnement dans docker-compose.yml
+### Fonctionnalités Récentes (Novembre 2024)
+- ✅ **Extension de stationnement** : Recherche et prolongation payante
+- ✅ **Interface utilisateur améliorée** : Boutons d'action rapide, contraste
+- ✅ **Gestion du temps** : Arrondi au quart d'heure, durées demi-heures
+- ✅ **Types de véhicules** : Limitation à 3 types (Voiture, 2 roues, Camionnette)
+- ✅ **Suite de tests complète** : DTO, Service, Controller, Integration
+
+### Architecture Technique
+- **Tests** : Suite complète avec validation, service, contrôleur, intégration
+- **Base de données de test** : Données pré-chargées avec réservations actives
+- **API REST** : Endpoints pour réservation, recherche et extension
+- **Sécurité** : Spring Security 6.x avec CORS configuré pour Vite
+- **Frontend** : React 18 + Vite pour un développement rapide
+
+### Données de Test
+- **13 réservations** pré-chargées dans H2
+- **Véhicules actifs** pour tester les fonctionnalités
+- **Différents états** : actif, expiré, en cours
+- **Types variés** : voitures, 2 roues, camionnettes
+
+### Configuration Ports
+- **Backend** : http://localhost:8081
+- **Frontend** : http://localhost:5174 (Vite)
+- **H2 Console** : http://localhost:8081/h2-console
 
 ---
 
-**Dernière mise à jour** : 23 octobre 2025
+**Dernière mise à jour** : 4 novembre 2024
 

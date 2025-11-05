@@ -25,6 +25,9 @@ public class PaymentRequest {
     @ValidParkingAddress
     private String address;
 
+    @NotNull
+    private Double paymentAmount;
+
     // payment token would normally be required; here we simulate so optional
     private String paymentToken;
 
@@ -75,5 +78,13 @@ public class PaymentRequest {
 
     public void setPaymentToken(String paymentToken) {
         this.paymentToken = paymentToken;
+    }
+
+    public Double getPaymentAmount() {
+        return paymentAmount;
+    }
+
+    public void setPaymentAmount(Double paymentAmount) {
+        this.paymentAmount = paymentAmount;
     }
 }

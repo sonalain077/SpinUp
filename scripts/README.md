@@ -86,6 +86,32 @@ Utilitaire pour diagnostiquer et libérer les ports utilisés.
 - Libération forcée ou gracieuse des ports
 - Mode audit pour tous les ports de l'application
 
+#### `clear-reservations.ps1` - **Nettoyage Base de Données** 🗑️
+Script pour vider toutes les réservations de la base de données.
+
+**Utilisation:**
+```powershell
+# Avec confirmation
+.\clear-reservations.ps1
+```
+
+**Fonctionnalités:**
+- Suppression de toutes les réservations
+- Demande de confirmation avant suppression
+- Comptage avant et après l'opération
+- Vérification de l'état de Docker
+
+#### `clear-reservations-quick.ps1` - **Nettoyage Rapide** ⚡
+Version rapide sans confirmation (pour développement).
+
+**Utilisation:**
+```powershell
+# Suppression immédiate
+.\clear-reservations-quick.ps1
+```
+
+**⚠️ Attention:** Ce script supprime IMMÉDIATEMENT toutes les réservations sans confirmation !
+
 ### 🧪 Scripts de Test
 
 #### `run-tests.ps1` - **Tests Complets** 🎯

@@ -7,13 +7,47 @@ const ParkingReservation = () => {
   const navigate = useNavigate();
   
   // Fonctions utilitaires pour les dates
+  const roundToNextQuarterHour = (date) => {
+    const minutes = date.getMinutes();
+    const seconds = date.getSeconds();
+    
+    // Si on est exactement sur un quart d'heure (0, 15, 30, 45) et pas de secondes, on garde cette heure
+    if (seconds === 0 && (minutes === 0 || minutes === 15 || minutes === 30 || minutes === 45)) {
+      return new Date(date);
+    }
+    
+    // Sinon, arrondir au prochain quart d'heure
+    let nextQuarterMinutes;
+    if (minutes < 15) {
+      nextQuarterMinutes = 15;
+    } else if (minutes < 30) {
+      nextQuarterMinutes = 30;
+    } else if (minutes < 45) {
+      nextQuarterMinutes = 45;
+    } else {
+      nextQuarterMinutes = 0; // Prochaine heure
+    }
+    
+    const newDate = new Date(date);
+    newDate.setMinutes(nextQuarterMinutes, 0, 0); // Remettre secondes et millisecondes à 0
+    
+    // Si on passe à l'heure suivante (minutes était > 45)
+    if (nextQuarterMinutes === 0) {
+      newDate.setHours(newDate.getHours() + 1);
+    }
+    
+    return newDate;
+  };
+
   const getCurrentDateTime = () => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const roundedDate = roundToNextQuarterHour(now);
+    
+    const year = roundedDate.getFullYear();
+    const month = String(roundedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(roundedDate.getDate()).padStart(2, '0');
+    const hours = String(roundedDate.getHours()).padStart(2, '0');
+    const minutes = String(roundedDate.getMinutes()).padStart(2, '0');
     
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
@@ -43,26 +77,47 @@ const ParkingReservation = () => {
   const [resultType, setResultType] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
   
+  // État pour la durée personnalisée
+  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [customHours, setCustomHours] = useState('1');
+  const [customMinutes, setCustomMinutes] = useState('0');
+  
   // Calcul du prix (1€50 les 30 minutes)
   const calculatePrice = (durationMinutes) => {
     if (!durationMinutes || durationMinutes <= 0) return 0;
-    const pricePerHalfHour = 1.50;
-    const halfHours = Math.ceil(durationMinutes / 30); // Arrondi au supérieur
+    const pricePerHalfHour = 1.50; // 1.50€ pour 30 minutes
+    const halfHours = Math.ceil(durationMinutes / 30); // Arrondi au supérieur à la demi-heure
     return (halfHours * pricePerHalfHour).toFixed(2);
   };
 
-  // Initialisation de la date par défaut (heure actuelle + 30 minutes minimum)
+  // Gestion de la durée personnalisée
+  const handleDurationModeChange = (value) => {
+    if (value === 'custom') {
+      setIsCustomDuration(true);
+      // Calculer immédiatement la durée avec les valeurs par défaut
+      const totalMinutes = parseInt(customHours) * 60 + parseInt(customMinutes);
+      setFormData(prev => ({ ...prev, durationMinutes: totalMinutes.toString() }));
+    } else {
+      setIsCustomDuration(false);
+      setFormData(prev => ({ ...prev, durationMinutes: value }));
+    }
+  };
+
+  const handleCustomDurationChange = () => {
+    const totalMinutes = parseInt(customHours) * 60 + parseInt(customMinutes);
+    setFormData(prev => ({ ...prev, durationMinutes: totalMinutes.toString() }));
+  };
+
+  // Effet pour mettre à jour la durée quand les heures/minutes personnalisées changent
   useEffect(() => {
-    const now = new Date();
-    // Pour la démo : commencer immédiatement (pas de +30 min)
-    // now.setMinutes(now.getMinutes() + 30); // Désactivé pour permettre des démonstrations immédiates
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    
-    const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+    if (isCustomDuration) {
+      handleCustomDurationChange();
+    }
+  }, [customHours, customMinutes, isCustomDuration]);
+
+  // Initialisation de la date par défaut (arrondie au quart d'heure supérieur)
+  useEffect(() => {
+    const formatted = getCurrentDateTime(); // Utilise la fonction qui arrondit automatiquement
     setFormData(prev => ({ ...prev, startAt: formatted }));
   }, []);
 
@@ -72,11 +127,11 @@ const ParkingReservation = () => {
       validateLicencePlate(formData.licencePlate) &&
       formData.vehicleType &&
       formData.startAt &&
-      formData.durationMinutes >= 0 && // Accepter 0 pour mode démo
+      (formData.durationMinutes >= 0 || isCustomDuration) && // Accepter 0 pour mode démo et mode personnalisé
       formData.address;
     
     setIsFormValid(isValid);
-  }, [formData]);
+  }, [formData, isCustomDuration]);
 
   // Validation de la plaque d'immatriculation
   const validateLicencePlate = (plate) => {
@@ -116,23 +171,45 @@ const ParkingReservation = () => {
       const formatted = formatLicencePlate(value);
       setFormData(prev => ({ ...prev, [name]: formatted }));
     } else if (name === 'startAt') {
-      // Validation de la date : doit être dans le futur
+      // Validation de la date : doit être dans le futur et arrondie au quart d'heure
       const selectedDate = new Date(value);
       const now = new Date();
       
       if (selectedDate < now) {
-        // Si la date est dans le passé, on la corrige à maintenant + 30 minutes
-        const futureDate = new Date(now.getTime() + 30 * 60000); // +30 minutes
+        // Si la date est dans le passé, on la corrige au prochain quart d'heure
         const correctedValue = getCurrentDateTime();
         setFormData(prev => ({ ...prev, [name]: correctedValue }));
         
         // Afficher un message d'avertissement
-        setResult('⚠️ La date sélectionnée est dans le passé. Ajustée automatiquement.');
+        setResult('⚠️ La date sélectionnée est dans le passé. Ajustée au prochain quart d\'heure.');
         setResultType('warning');
         setTimeout(() => setResult(''), 3000);
       } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        // Toujours arrondir au quart d'heure, peu importe la saisie
+        const roundedDate = roundToNextQuarterHour(selectedDate);
+        const year = roundedDate.getFullYear();
+        const month = String(roundedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(roundedDate.getDate()).padStart(2, '0');
+        const hours = String(roundedDate.getHours()).padStart(2, '0');
+        const roundedMinutes = String(roundedDate.getMinutes()).padStart(2, '0');
+        
+        const roundedValue = `${year}-${month}-${day}T${hours}:${roundedMinutes}`;
+        
+        // Vérifier si l'arrondi a changé la valeur
+        if (roundedValue !== value) {
+          setFormData(prev => ({ ...prev, [name]: roundedValue }));
+          
+          // Afficher un message d'information seulement si l'heure a été modifiée
+          setResult('ℹ️ Heure automatiquement ajustée au quart d\'heure (00, 15, 30 ou 45 min).');
+          setResultType('info');
+          setTimeout(() => setResult(''), 3000);
+        } else {
+          setFormData(prev => ({ ...prev, [name]: value }));
+        }
       }
+    } else if (name === 'durationMinutes') {
+      // Gestion de la durée avec mode personnalisé
+      handleDurationModeChange(value);
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -174,16 +251,27 @@ const ParkingReservation = () => {
   // Classes de validation CSS
   const getValidationClass = (fieldName) => {
     const value = formData[fieldName];
-    if (!value) return '';
     
     if (fieldName === 'licencePlate') {
       return validateLicencePlate(value) ? 'valid' : 'invalid';
     }
     
+    if (fieldName === 'durationMinutes') {
+      // En mode personnalisé, on considère comme valide si on a une durée calculée
+      if (isCustomDuration) {
+        return (formData.durationMinutes && parseInt(formData.durationMinutes) > 0) ? 'valid' : '';
+      }
+      // En mode normal, on vérifie la valeur
+      return value ? 'valid' : '';
+    }
+    
+    if (!value) return '';
     return value ? 'valid' : 'invalid';
   };
 
+  // ⚠️ FONCTION DÉSACTIVÉE - La réservation est maintenant créée dans Payment.jsx après le paiement
   // Service API pour communiquer avec le backend
+  /*
   const reserveParking = async (data) => {
     console.log('🚀 DEBUT REQUETE API');
     console.log('📍 URL:', 'http://localhost:8081/api/parking/reserve');
@@ -218,6 +306,8 @@ const ParkingReservation = () => {
       throw error;
     }
   };
+  */
+
 
   // Soumission du formulaire
   const handleSubmit = async (e) => {
@@ -261,12 +351,16 @@ const ParkingReservation = () => {
       const isDemoInfraction = parseInt(formData.durationMinutes) === 0;
       const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes); // 1 min pour démo
       
+      // Calcul du prix total AVANT la création de l'objet
+      const totalPrice = calculatePrice(finalDuration);
+      
       const reservationData = {
         licencePlate: formData.licencePlate,
         vehicleType: formData.vehicleType,
         startAt: startAtValue,
         durationMinutes: finalDuration,
         address: formData.address,
+        paymentAmount: totalPrice, // ✅ Ajout du montant requis
         paymentToken: 'pending-payment' // Token temporaire en attente de paiement
       };
       
@@ -299,20 +393,16 @@ const ParkingReservation = () => {
       
       console.log('✅ Toutes les validations passées');
       
-      // Création d'une pré-réservation avant le paiement
-      console.log('🚀 Création de la pré-réservation:', reservationData);
+      // Préparation des données pour le paiement (SANS créer la réservation)
+      console.log('� Préparation des données pour le paiement:', reservationData);
       
-      const response = await reserveParking(reservationData);
-      console.log('✅ Pré-réservation créée:', response);
-      
-      // Calcul du prix total
-      const totalPrice = calculatePrice(reservationData.durationMinutes);
+      // ⚠️ NOTE: La réservation sera créée APRÈS le paiement dans Payment.jsx
+      // On ne fait plus l'appel API ici pour éviter la duplication
       
       // Redirection vers la page de paiement avec les détails de la réservation
       navigate('/payment', { 
         state: { 
           reservationData: reservationData,
-          reservationResponse: response,
           amount: totalPrice,
           formattedAmount: `${totalPrice}€`
         } 
@@ -341,6 +431,36 @@ const ParkingReservation = () => {
           </div>
         </div>
       </header>
+      
+      {/* Boutons d'actions rapides */}
+      <div className="quick-actions">
+        <h2>🔧 Actions rapides</h2>
+        <div className="action-buttons">
+          <button 
+            type="button"
+            className="action-btn view-places-btn"
+            onClick={() => navigate('/mes-places')}
+          >
+            <span className="btn-icon">👁️</span>
+            <span className="btn-text">Voir mes places</span>
+            <span className="btn-description">Consulter vos réservations actives</span>
+          </button>
+          
+          <button 
+            type="button"
+            className="action-btn extend-parking-btn"
+            onClick={() => navigate('/rallonger-stationnement')}
+          >
+            <span className="btn-icon">⏰</span>
+            <span className="btn-text">Rallonger stationnement</span>
+            <span className="btn-description">Prolonger une réservation en cours</span>
+          </button>
+        </div>
+      </div>
+      
+      {/* Formulaire de nouvelle réservation */}
+      <div className="new-reservation-section">
+        <h2>📝 Nouvelle réservation</h2>
       
       <form className="reservation-form" onSubmit={handleSubmit}>
         {/* Plaque d'immatriculation */}
@@ -389,10 +509,16 @@ const ParkingReservation = () => {
             name="startAt"
             value={formData.startAt}
             onChange={handleInputChange}
+            onBlur={(e) => {
+              // Force l'arrondi quand l'utilisateur quitte le champ
+              const event = { target: { name: 'startAt', value: e.target.value } };
+              handleInputChange(event);
+            }}
             className={getValidationClass('startAt')}
             min={getCurrentDateTime()}
             required
           />
+          <small className="input-hint">⏰ L'heure sera automatiquement arrondie au quart d'heure supérieur (00, 15, 30, 45 min)</small>
         </div>
 
         {/* Durée en minutes */}
@@ -401,7 +527,7 @@ const ParkingReservation = () => {
           <select
             id="durationMinutes"
             name="durationMinutes"
-            value={formData.durationMinutes}
+            value={isCustomDuration ? 'custom' : formData.durationMinutes}
             onChange={handleInputChange}
             className={getValidationClass('durationMinutes')}
             required
@@ -420,11 +546,45 @@ const ParkingReservation = () => {
             <option value="300">5h</option>
             <option value="330">5h 30min</option>
             <option value="360">6h</option>
-            <option value="390">6h 30min</option>
-            <option value="420">7h</option>
-            <option value="450">7h 30min</option>
-            <option value="480">8h</option>
+            <option value="custom">🎛️ Personnaliser</option>
           </select>
+          
+          {/* Durée personnalisée */}
+          {isCustomDuration && (
+            <div className="custom-duration">
+              <label>Durée personnalisée :</label>
+              <div className="duration-inputs">
+                <div className="duration-input-group">
+                  <label htmlFor="customHours">Heures :</label>
+                  <select 
+                    id="customHours"
+                    value={customHours}
+                    onChange={(e) => setCustomHours(e.target.value)}
+                    className="duration-select"
+                  >
+                    {[...Array(24)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}h</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="duration-input-group">
+                  <label htmlFor="customMinutes">Minutes :</label>
+                  <select 
+                    id="customMinutes"
+                    value={customMinutes}
+                    onChange={(e) => setCustomMinutes(e.target.value)}
+                    className="duration-select"
+                  >
+                    <option value="0">0 min</option>
+                    <option value="30">30 min</option>
+                  </select>
+                </div>
+              </div>
+              <p className="custom-duration-display">
+                Durée sélectionnée : {customHours}h {customMinutes === '0' ? '' : `${customMinutes}min`}
+              </p>
+            </div>
+          )}
           
           {/* Informations tarifaires */}
           <div className="pricing-info">
@@ -473,6 +633,7 @@ const ParkingReservation = () => {
           )}
         </button>
       </form>
+      </div> {/* Fermeture de new-reservation-section */}
 
       {/* Affichage des résultats */}
       {result && (

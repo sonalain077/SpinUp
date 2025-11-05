@@ -9,6 +9,7 @@
 export const VEHICLE_TYPES = {
   CAR: 'CAR',
   MOTORCYCLE: 'MOTORCYCLE',
+  VAN: 'VAN',
   BICYCLE: 'BICYCLE',
   ELECTRIC_SCOOTER: 'ELECTRIC_SCOOTER'
 };
@@ -25,9 +26,15 @@ const vehicleTypeConfig = {
   },
   MOTORCYCLE: {
     icon: '🏍️',
-    label: 'Moto',
-    shortLabel: 'Moto',
+    label: '2 roues',
+    shortLabel: '2 roues',
     color: '#EF4444' // Rouge
+  },
+  VAN: {
+    icon: '🚐',
+    label: 'Camionnette',
+    shortLabel: 'Camionnette',
+    color: '#F59E0B' // Orange
   },
   BICYCLE: {
     icon: '🚴',
@@ -105,6 +112,7 @@ export function getVehicleTypeStats(tickets) {
   const stats = {
     CAR: 0,
     MOTORCYCLE: 0,
+    VAN: 0,
     BICYCLE: 0,
     ELECTRIC_SCOOTER: 0
   };
@@ -120,11 +128,15 @@ export function getVehicleTypeStats(tickets) {
 }
 
 /**
- * Retourne une liste formatée des types de véhicules disponibles
+ * Retourne une liste formatée des types de véhicules disponibles pour la réservation
+ * Seuls les types autorisés sont retournés : Voiture, 2 roues, Camionnette
  * @returns {Array} [{value: 'CAR', label: 'Voiture', icon: '🚗'}, ...]
  */
 export function getVehicleTypeOptions() {
-  return Object.keys(vehicleTypeConfig).map(type => ({
+  // Types autorisés pour la réservation
+  const allowedTypes = ['CAR', 'MOTORCYCLE', 'VAN'];
+  
+  return allowedTypes.map(type => ({
     value: type,
     label: vehicleTypeConfig[type].label,
     shortLabel: vehicleTypeConfig[type].shortLabel,
