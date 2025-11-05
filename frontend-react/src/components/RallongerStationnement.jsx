@@ -127,27 +127,44 @@ const RallongerStationnement = () => {
     setResultType('info');
 
     try {
-      // Simulation d'appel API - à remplacer par le vrai appel
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Appel API backend pour rechercher la réservation
+      const params = searchMethod === 'licencePlate' 
+        ? `licencePlate=${encodeURIComponent(searchValue.trim())}`
+        : `reservationId=${encodeURIComponent(searchValue.trim())}`;
       
-      // Données simulées - à remplacer par vraies données
-      const mockReservation = {
-        id: 'R-' + Date.now(),
-        licencePlate: searchValue,
-        vehicleType: 'CAR',
-        startAt: new Date().toISOString(),
-        durationMinutes: 120,
-        address: 'Parking Centre Ville',
-        status: 'ACTIVE',
-        endAt: new Date(Date.now() + 120 * 60000).toISOString()
-      };
+      const response = await fetch(`http://localhost:8081/api/parking/search?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
-      setFoundReservation(mockReservation);
-      setResult('✅ Réservation trouvée !');
-      setResultType('success');
+      if (response.ok) {
+        const reservation = await response.json();
+        
+        // Calculer endAt si non présent
+        if (!reservation.endAt && reservation.startAt && reservation.durationMinutes) {
+          const startDate = new Date(reservation.startAt);
+          reservation.endAt = new Date(startDate.getTime() + reservation.durationMinutes * 60000).toISOString();
+        }
+        
+        setFoundReservation(reservation);
+        setResult('✅ Réservation trouvée !');
+        setResultType('success');
+      } else if (response.status === 404) {
+        setResult('❌ Aucune réservation active trouvée avec ces informations');
+        setResultType('error');
+        setFoundReservation(null);
+      } else {
+        setResult('❌ Erreur lors de la recherche');
+        setResultType('error');
+        setFoundReservation(null);
+      }
     } catch (error) {
-      setResult('❌ Erreur lors de la recherche');
+      console.error('Erreur de recherche:', error);
+      setResult('❌ Erreur de connexion au serveur');
       setResultType('error');
+      setFoundReservation(null);
     } finally {
       setLoading(false);
     }
@@ -252,24 +269,46 @@ const RallongerStationnement = () => {
     setResultType('info');
 
     try {
-      // Simulation d'appel API - à remplacer par le vrai appel
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       const extensionPrice = calculatePrice(parseInt(extensionDuration));
       
-      // Redirection vers page de confirmation avec toutes les données
-      navigate('/extension-confirmation', {
-        state: {
-          reservation: foundReservation,
-          extensionDuration: parseInt(extensionDuration),
-          extensionPrice,
-          paymentMethod,
-          success: true
-        }
+      // Appel API backend pour étendre la réservation
+      const response = await fetch('http://localhost:8081/api/parking/extend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reservationId: foundReservation.id,
+          licencePlate: foundReservation.licencePlate,
+          extensionMinutes: parseInt(extensionDuration),
+          paymentToken: `${paymentMethod}-${Date.now()}`
+        })
       });
+
+      const backendResponse = await response.json();
+      
+      if (response.ok && backendResponse.success) {
+        // Succès - redirection vers page de confirmation
+        navigate('/extension-confirmation', {
+          state: {
+            reservation: foundReservation,
+            extensionDuration: parseInt(extensionDuration),
+            extensionPrice: backendResponse.paymentAmount || extensionPrice,
+            paymentMethod,
+            success: true,
+            message: backendResponse.message,
+            reservationId: backendResponse.reservationId
+          }
+        });
+      } else {
+        // Échec du paiement ou de l'extension
+        setResult(`❌ ${backendResponse.message || 'Erreur lors de l\'extension'}`);
+        setResultType('error');
+      }
       
     } catch (error) {
-      setResult('❌ Erreur lors de l\'extension');
+      console.error('Erreur d\'extension:', error);
+      setResult('❌ Erreur de connexion au serveur');
       setResultType('error');
     } finally {
       setLoading(false);
