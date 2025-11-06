@@ -16,6 +16,8 @@ import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.service.ParkingService;
+import com.parkandsee.backend.dto.OverduePaymentRequest;
+import com.parkandsee.backend.dto.OverduePaymentResponse;
 
 import jakarta.validation.Valid;
 
@@ -122,6 +124,15 @@ public class ParkingController {
         }
         
         ExitResponse response = parkingService.confirmExit(reservationId.trim());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Payer une infraction de dépassement et marquer la réservation comme régularisée
+     */
+    @PostMapping("/pay-overdue")
+    public ResponseEntity<OverduePaymentResponse> payOverdue(@Valid @RequestBody OverduePaymentRequest request) {
+        OverduePaymentResponse response = parkingService.payOverdue(request);
         return ResponseEntity.ok(response);
     }
 

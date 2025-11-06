@@ -378,8 +378,8 @@ const MesPlaces = () => {
                 </div>
               </div>
 
-              {/* Bouton Quitter le parking */}
-              {reservation.status === 'ACTIVE' && !showExitConfirm && (
+              {/* Bouton Quitter le parking (après régularisation ou actif) */}
+              {(reservation.status === 'ACTIVE' || reservation.status === 'REGULARISE') && !showExitConfirm && (
                 <div className="exit-section">
                   <button
                     className="exit-button"
@@ -403,7 +403,23 @@ const MesPlaces = () => {
                       </p>
                       <button 
                         className="regularize-button"
-                        onClick={() => navigate('/rallonger-stationnement')}
+                        onClick={() => {
+                          // Rediriger vers la page de paiement pour régulariser l'infraction
+                          navigate('/payment', {
+                            state: {
+                              // Mode régularisation d'infraction
+                              overdue: true,
+                              reservationId: reservation.id,
+                              amount: exitMessage.overdueAmount?.toFixed(2) || 0,
+                              overdueMinutes: exitMessage.overdueMinutes || 0,
+                              // Infos d'affichage facultatives
+                              regularizationInfo: {
+                                licencePlate: reservation.licencePlate,
+                                address: reservation.address
+                              }
+                            }
+                          });
+                        }}
                       >
                         📝 Régulariser maintenant
                       </button>
@@ -436,6 +452,8 @@ const MesPlaces = () => {
                   </div>
                 </div>
               )}
+
+              {/* Après régularisation, l'usager suit le même flux que d'habitude: vérifier puis confirmer la sortie */}
             </div>
           </div>
         )}
