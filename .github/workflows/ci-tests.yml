@@ -88,9 +88,15 @@ jobs:
     - name: Configuration Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: frontend-react/package-lock.json
+
+    - name: Vérifier version Node.js
+      run: |
+        node --version
+        npm --version
+        echo "Node.js version vérifiée - doit être >= 20"
 
     - name: Installation des dépendances
       run: |
