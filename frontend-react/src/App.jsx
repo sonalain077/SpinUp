@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import ParkingReservation from './components/ParkingReservation';
-import RallongerStationnement from './components/RallongerStationnement';
-import ExtensionConfirmation from './components/ExtensionConfirmation';
-import MesPlaces from './components/MesPlaces';
-import AgentDashboard from './components/agent/AgentDashboard';
-import AgentOverdueControl from './components/AgentOverdueControl';
 import Payment from './components/Payment';
 import Confirmation from './components/Confirmation';
-import Login from './components/Login';
-import PrivateRoute from './components/PrivateRoute';
+import MesPlaces from './components/MesPlaces';
+import RallongerStationnement from './components/RallongerStationnement';
+import ExtensionConfirmation from './components/ExtensionConfirmation';
+import AgentDashboard from './components/AgentDashboard';
 import './App.css';
+// react-toastify for in-app notifications
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -66,24 +66,27 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/parking-reservation" element={<ParkingReservation />} />
-          <Route path="/reservation" element={<ParkingReservation />} />
-          <Route path="/rallonger-stationnement" element={<RallongerStationnement />} />
-          <Route path="/extension-confirmation" element={<ExtensionConfirmation />} />
-          <Route path="/mes-places" element={<MesPlaces />} />
+          <Route path="/reservation" element={<Navigate to="/parking-reservation" replace />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirmation" element={<Confirmation />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/agent-dashboard"
-            element={
-              <PrivateRoute roleRequired={'agent'}>
-                <AgentDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/agent/overdue" element={<AgentOverdueControl />} />
-          <Route path="/agent" element={<Login />} />
+          <Route path="/mes-places" element={<MesPlaces />} />
+          <Route path="/rallonger-stationnement" element={<RallongerStationnement />} />
+          <Route path="/extension-confirmation" element={<ExtensionConfirmation />} />
+          <Route path="/agent-dashboard" element={<AgentDashboard />} />
         </Routes>
+        {/* Toast container placed at app root so any component can fire toasts */}
+        <ToastContainer 
+          position="top-right" 
+          autoClose={5000} 
+          hideProgressBar={false} 
+          newestOnTop={true}
+          closeOnClick 
+          rtl={false} 
+          pauseOnFocusLoss 
+          draggable 
+          pauseOnHover
+          limit={1}
+        />
       </div>
     </Router>
   );
