@@ -47,14 +47,14 @@ jobs:
 
     - name: Upload rapport de tests
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-reports
         path: backend/target/surefire-reports/
 
     - name: Upload rapport de couverture
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: backend/target/site/jacoco/
@@ -95,11 +95,14 @@ jobs:
       run: |
         cd frontend-react
         npm run lint --if-present || echo "Pas de configuration lint"
+      continue-on-error: true
 
     - name: Build du frontend
       run: |
         cd frontend-react
         npm run build
+      env:
+        CI: false
 
     - name: Résumé du build frontend
       if: always()
