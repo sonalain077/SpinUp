@@ -10,11 +10,10 @@ const MesPlaces = () => {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-<<<<<<< HEAD
   const [exitLoading, setExitLoading] = useState(false);
   const [exitMessage, setExitMessage] = useState(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-=======
+
   
   // Track scheduled timers to clear them on unmount
   const timersRef = useRef([]);
@@ -29,7 +28,6 @@ const MesPlaces = () => {
     };
   }, []);
 
->>>>>>> 771cdde (Ajouté des notifications toastify)
 
   // Fonction pour rechercher une réservation
   const handleSearch = async (e) => {
