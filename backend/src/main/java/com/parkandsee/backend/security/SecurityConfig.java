@@ -23,16 +23,18 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // Pour la console H2
+            // Autoriser l'affichage de la console H2 dans un iframe depuis la même origine
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Autoriser tous les endpoints publics (utilisation explicite d'AntPathRequestMatcher)
-                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/parking/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/agent/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/reservations/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
+                // Autoriser tous les endpoints publics - utiliser AntPathRequestMatcher pour éviter l'ambiguïté multi-servlet
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/agent/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/reservations/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
+                // Préflight CORS (toutes origins/methods déjà gérées plus haut) - matcher explicite
+                .requestMatchers(new AntPathRequestMatcher("/**", HttpMethod.OPTIONS.name())).permitAll()
                 // Tout le reste nécessite une authentification
                 .anyRequest().authenticated()
             );
@@ -52,6 +54,8 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Content-Type"));
+        // Pour éviter que certaines réponses JSON simples soient bloquées/cachées
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

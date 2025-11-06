@@ -4,6 +4,8 @@ import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
 import com.parkandsee.backend.dto.ExtensionRequest;
 import com.parkandsee.backend.dto.ExitResponse;
+import com.parkandsee.backend.dto.OverduePaymentRequest;
+import com.parkandsee.backend.dto.OverduePaymentResponse;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.entity.VehicleType;
 import com.parkandsee.backend.entity.ReservationStatus;
@@ -55,6 +57,41 @@ public class ParkingService {
     private boolean simulatePayment(String token) {
         // In real life we'd call a payment gateway. Here, accept any token or null as success for demo.
         return true;
+    }
+
+    /**
+     * Régulariser une infraction (paiement du dépassement et mise à jour du statut)
+     */
+    @Transactional
+    public OverduePaymentResponse payOverdue(OverduePaymentRequest request) {
+        Optional<ReservationEntity> reservationOpt = reservationRepository.findById(request.getReservationId());
+        if (reservationOpt.isEmpty()) {
+            return OverduePaymentResponse.failure("Réservation non trouvée");
+        }
+
+        ReservationEntity reservation = reservationOpt.get();
+
+        // Calculer les montants de dépassement avant modification
+        long overdueMinutes = reservation.getOverdueMinutes();
+        double overdueAmount = reservation.getOverdueAmount();
+
+        if (overdueMinutes <= 0 || overdueAmount <= 0.0) {
+            // Rien à payer
+            return OverduePaymentResponse.failure("Aucune infraction à régulariser");
+        }
+
+        // Simuler le paiement (toujours OK en démo)
+        if (!simulatePayment(request.getPaymentToken())) {
+            return OverduePaymentResponse.failure("Échec du paiement");
+        }
+
+        // Mettre à jour la réservation: ajouter le montant payé et marquer comme régularisée
+        Double currentPaid = reservation.getPaymentAmount() == null ? 0.0 : reservation.getPaymentAmount();
+        reservation.setPaymentAmount(currentPaid + overdueAmount);
+        reservation.setStatus(com.parkandsee.backend.entity.ReservationStatus.REGULARISE);
+        reservationRepository.save(reservation);
+
+        return OverduePaymentResponse.success(reservation.getId(), overdueAmount, overdueMinutes);
     }
 
     /**
@@ -151,8 +188,8 @@ public class ParkingService {
 
         ReservationEntity reservation = reservationOpt.get();
         
-        // Vérifier si la réservation est en dépassement
-        if (reservation.isOverdue()) {
+        // Vérifier si la réservation est en dépassement (sauf si déjà régularisée)
+        if (reservation.isOverdue() && reservation.getStatus() != ReservationStatus.REGULARISE) {
             long overdueMinutes = reservation.getOverdueMinutes();
             double overdueAmount = reservation.getOverdueAmount();
             
@@ -188,8 +225,8 @@ public class ParkingService {
 
         ReservationEntity reservation = reservationOpt.get();
         
-        // Vérifier à nouveau le dépassement (sécurité)
-        if (reservation.isOverdue()) {
+        // Vérifier à nouveau le dépassement (sécurité), sauf si déjà régularisée
+        if (reservation.isOverdue() && reservation.getStatus() != ReservationStatus.REGULARISE) {
             long overdueMinutes = reservation.getOverdueMinutes();
             double overdueAmount = reservation.getOverdueAmount();
             
@@ -200,14 +237,15 @@ public class ParkingService {
                 reservationId
             );
         }
-        
-        // Supprimer la réservation
+        String msg;
+        switch (reservation.getStatus()) {
+            case REGULARISE -> msg = "Véhicule régularisé et sorti avec succès. Bonne route !";
+            case COMPLETED -> msg = "Véhicule déjà terminé puis sorti. Bonne route !";
+            default -> msg = "Véhicule sorti avec succès. Bonne route !";
+        }
+
         reservationRepository.delete(reservation);
-        
-        return ExitResponse.allowed(
-            "Véhicule sorti avec succès. Bonne route !",
-            reservationId
-        );
+        return ExitResponse.allowed(msg, reservationId);
     }
 }
 

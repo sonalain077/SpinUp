@@ -8,7 +8,7 @@ const Payment = () => {
   const location = useLocation();
   
   // Récupération des données de réservation
-  const { reservationData, reservationResponse, amount } = location.state || {};
+  const { reservationData, reservationResponse, amount, overdue, reservationId, overdueMinutes, regularizationInfo } = location.state || {};
   
   // État pour le mode de paiement
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -43,7 +43,11 @@ const Payment = () => {
   };
 
   const handleBackToReservation = () => {
-    navigate('/reservation');
+    if (overdue) {
+      navigate('/mes-places');
+    } else {
+      navigate('/reservation');
+    }
   };
 
   const handlePaymentMethodChange = (method) => {
@@ -85,17 +89,13 @@ const Payment = () => {
         // Format simple: +33 suivi de 9 chiffres sans espaces
         const cleaned = value.replace(/\D/g, '');
         let phoneDigits = '';
-        
-        // Gestion des différents formats d'entrée
         if (cleaned.startsWith('33')) {
-          phoneDigits = cleaned.substring(2, 11); // Prendre max 9 chiffres après 33
+          phoneDigits = cleaned.substring(2, 11);
         } else if (cleaned.startsWith('0')) {
-          phoneDigits = cleaned.substring(1, 10); // Prendre max 9 chiffres après 0
+          phoneDigits = cleaned.substring(1, 10);
         } else {
-          phoneDigits = cleaned.substring(0, 9); // Prendre max 9 chiffres
+          phoneDigits = cleaned.substring(0, 9);
         }
-        
-        // Format final simple : +33 + 9 chiffres
         formattedValue = '+33' + phoneDigits;
         break;
       default:
@@ -115,47 +115,97 @@ const Payment = () => {
     }
 
     try {
-      // Simulation du traitement du paiement
       console.log('💳 Traitement du paiement...');
+      console.log('Mode régularisation:', overdue);
       console.log('Méthode:', paymentMethod);
-      console.log('Données:', paymentData);
       console.log('Montant:', amount);
 
-      // 🔥 APPEL API POUR CRÉER LA RÉSERVATION DANS LA BASE DE DONNÉES
-      console.log('📤 Envoi de la réservation au backend...');
-      const response = await fetch('http://localhost:8081/api/parking/reserve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(reservationData)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Erreur backend:', errorText);
-        throw new Error(`Erreur ${response.status}: ${errorText}`);
-      }
-
-      const backendResponse = await response.json();
-      console.log('✅ Réservation créée dans le backend:', backendResponse);
-      console.log('🆔 ID de réservation retourné:', backendResponse.reservationId);
-      console.log('📦 Objet complet backendResponse:', JSON.stringify(backendResponse, null, 2));
-
-      // Redirection vers la page de confirmation avec la VRAIE réponse du backend
-      navigate('/confirmation', {
-        state: {
-          reservationData,
-          reservationResponse: backendResponse, // Utiliser la vraie réponse du backend
-          amount,
-          paymentMethod,
-          success: true
+      if (overdue) {
+        // Paiement d'une infraction (dépassement)
+        if (!reservationId) {
+          throw new Error('ID de réservation manquant pour la régularisation');
         }
-      });
+        const payload = {
+          reservationId,
+          paymentToken: paymentMethod || 'demo'
+        };
+        console.log('📤 Envoi paiement infraction:', payload);
+        const response = await fetch('http://localhost:8081/api/parking/pay-overdue', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Erreur régularisation ${response.status}: ${errorText}`);
+        }
+        const payRes = await response.json();
+        console.log('✅ Infraction régularisée:', payRes);
+
+        // Sortie automatique après régularisation (suppression de la réservation)
+        let autoExited = false;
+        try {
+          const exitResp = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${reservationId}`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+          });
+          if (exitResp.ok) {
+            const exitJson = await exitResp.json();
+            console.log('🚗 Sortie effectuée:', exitJson);
+            autoExited = exitJson.allowed === true || exitJson.canExit === true;
+          } else {
+            console.warn('⚠️ Échec sortie automatique, code:', exitResp.status);
+          }
+        } catch (e) {
+          console.warn('⚠️ Exception sortie automatique:', e);
+        }
+
+        navigate('/confirmation', {
+          state: {
+            reservationData: reservationData || regularizationInfo || {},
+            reservationResponse: { reservationId },
+            amount: payRes.overdueAmount ?? amount,
+            overdue: true,
+            overdueMinutes: payRes.overdueMinutes ?? overdueMinutes,
+            overdueAmount: payRes.overdueAmount ?? amount,
+            paymentMethod,
+            success: payRes.success !== false,
+            autoExited
+          }
+        });
+      } else {
+        // Paiement normal de réservation
+        console.log('� Envoi de la réservation au backend...');
+        const response = await fetch('http://localhost:8081/api/parking/reserve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(reservationData)
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Erreur ${response.status}: ${errorText}`);
+        }
+        const backendResponse = await response.json();
+        console.log('✅ Réservation créée:', backendResponse);
+        navigate('/confirmation', {
+          state: {
+            reservationData,
+            reservationResponse: backendResponse,
+            amount,
+            paymentMethod,
+            success: true
+          }
+        });
+      }
     } catch (error) {
       console.error('❌ Erreur lors du paiement:', error);
-      alert('Erreur lors du paiement. Veuillez réessayer.');
+      alert(error.message || 'Erreur lors du paiement. Veuillez réessayer.');
     }
   };
 
@@ -177,35 +227,51 @@ const Payment = () => {
       </header>
 
       <main className="payment-content">
-        {reservationData ? (
+        {(reservationData || overdue) ? (
           <>
             {/* Récapitulatif de la réservation */}
             <div className="reservation-summary">
-              <h2>📋 Récapitulatif de votre réservation</h2>
+              <h2>{overdue ? '⚠️ Régularisation d\'infraction' : '📋 Récapitulatif de votre réservation'}</h2>
               
               <div className="summary-details">
                 <div className="detail-row">
                   <span className="label">🚗 Véhicule :</span>
-                  <span className="value">{reservationData.licencePlate} ({getVehicleTypeLabel(reservationData.vehicleType)})</span>
+                  <span className="value">{(reservationData?.licencePlate || regularizationInfo?.licencePlate || 'N/A')} {reservationData?.vehicleType && `(${getVehicleTypeLabel(reservationData.vehicleType)})`}</span>
                 </div>
                 
                 <div className="detail-row">
                   <span className="label">📍 Parking :</span>
-                  <span className="value">{reservationData.address}</span>
+                  <span className="value">{reservationData?.address || regularizationInfo?.address || 'N/A'}</span>
                 </div>
                 
-                <div className="detail-row">
-                  <span className="label">⏰ Début :</span>
-                  <span className="value">{new Date(reservationData.startAt).toLocaleString('fr-FR')}</span>
-                </div>
-                
-                <div className="detail-row">
-                  <span className="label">⏱️ Durée :</span>
-                  <span className="value">{Math.floor(reservationData.durationMinutes / 60)}h {reservationData.durationMinutes % 60}min</span>
-                </div>
+                {!overdue && reservationData && (
+                  <>
+                    <div className="detail-row">
+                      <span className="label">⏰ Début :</span>
+                      <span className="value">{new Date(reservationData.startAt).toLocaleString('fr-FR')}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">⏱️ Durée :</span>
+                      <span className="value">{Math.floor(reservationData.durationMinutes / 60)}h {reservationData.durationMinutes % 60}min</span>
+                    </div>
+                  </>
+                )}
+
+                {overdue && (
+                  <>
+                    <div className="detail-row">
+                      <span className="label">⏰ Minutes de dépassement :</span>
+                      <span className="value">{overdueMinutes}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">💸 Montant de l'infraction :</span>
+                      <span className="value">{amount}€</span>
+                    </div>
+                  </>
+                )}
                 
                 <div className="detail-row total">
-                  <span className="label">💰 Montant total :</span>
+                  <span className="label">{overdue ? '💰 Montant à payer' : '💰 Montant total'} :</span>
                   <span className="value">{amount}€</span>
                 </div>
               </div>
@@ -369,7 +435,7 @@ const Payment = () => {
                 onClick={handlePayment}
                 disabled={!isPaymentComplete()}
               >
-                💳 Payer {amount}€
+                {overdue ? `💳 Régulariser ${amount}€` : `💳 Payer ${amount}€`}
               </button>
             </div>
           </>

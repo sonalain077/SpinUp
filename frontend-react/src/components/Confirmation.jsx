@@ -8,7 +8,7 @@ const Confirmation = () => {
   const location = useLocation();
   
   // Récupération des données de la réservation et du paiement
-  const { reservationData, reservationResponse, amount, paymentMethod, success } = location.state || {};
+  const { reservationData, reservationResponse, amount, paymentMethod, success, overdue, overdueMinutes, overdueAmount } = location.state || {};
 
   // 🔍 LOGS DE DEBUG
   console.log('🎯 Confirmation - État reçu:', location.state);
@@ -17,6 +17,34 @@ const Confirmation = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleGoToMesPlaces = () => {
+    // Permettre à l'usager de lancer la sortie via le flux standard Mes Places
+    navigate('/mes-places');
+  };
+
+  const handleQuitAfterRegularise = async () => {
+    try {
+      const id = reservationResponse?.reservationId;
+      if (!id) {
+        alert('ID de réservation manquant');
+        return;
+      }
+      const resp = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${id}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!resp.ok) {
+        throw new Error('Erreur lors de la sortie');
+      }
+      const data = await resp.json();
+      alert(data.message || 'Véhicule sorti.');
+      navigate('/parking-reservation');
+    } catch (e) {
+      console.error(e);
+      alert("Une erreur est survenue lors de la sortie. Veuillez réessayer.");
+    }
   };
 
   const getPaymentMethodText = (method) => {
@@ -60,8 +88,17 @@ const Confirmation = () => {
           <div className="confirmation-details">
             {/* Message de succès */}
             <div className="success-message">
-              <h2>🎉 Paiement confirmé !</h2>
-              <p>Votre place de parking a été réservée avec succès.</p>
+              {overdue ? (
+                <>
+                  <h2>✅ Infraction régularisée</h2>
+                  <p>Votre dépassement de {overdueMinutes} minute(s) a été réglé ({overdueAmount}€).</p>
+                </>
+              ) : (
+                <>
+                  <h2>🎉 Paiement confirmé !</h2>
+                  <p>Votre place de parking a été réservée avec succès.</p>
+                </>
+              )}
             </div>
 
             {/* Informations essentielles */}
@@ -70,7 +107,7 @@ const Confirmation = () => {
               
               {/* ID de réservation mis en avant */}
               <div className="reservation-id-highlight">
-                <div className="id-label">🆔 Numéro de réservation (conservez-le pour retrouver votre place) :</div>
+                <div className="id-label">🆔 Numéro de réservation {overdue ? '(régularisée)' : '(conservez-le pour retrouver votre place)'} :</div>
                 <div className="id-value" title="Cliquez pour copier">
                   {reservationResponse?.reservationId || 'R-' + Date.now()}
                 </div>
@@ -119,7 +156,7 @@ const Confirmation = () => {
                 </div>
 
                 <div className="info-item total">
-                  <span className="info-label">💰 Montant payé :</span>
+                  <span className="info-label">{overdue ? '💰 Montant régularisation :' : '💰 Montant payé :'}</span>
                   <span className="info-value">{amount}€</span>
                 </div>
               </div>
@@ -130,7 +167,8 @@ const Confirmation = () => {
               <h4>⚠️ Informations importantes</h4>
               <ul>
                 <li>📱 Conservez votre numéro de réservation : <strong>{reservationResponse?.reservationId || 'R-' + Date.now()}</strong></li>
-                <li>📧 Une confirmation a été envoyée par email. </li>
+                {!overdue && <li>📧 Une confirmation a été envoyée par email. </li>}
+                {overdue && <li>⚠️ Votre statut de réservation est maintenant: Régularisé.</li>}
               </ul>
             </div>
 
@@ -155,12 +193,30 @@ const Confirmation = () => {
 
         {/* Action principale */}
         <div className="confirmation-actions">
-          <button 
-            className="home-button"
-            onClick={handleBackToHome}
-          >
-            🏠 Retour à l'accueil
-          </button>
+          {overdue ? (
+            <>
+              <button 
+                className="home-button"
+                onClick={handleGoToMesPlaces}
+              >
+                🚗 Procéder à la sortie (Mes Places)
+              </button>
+              <div style={{height:10}} />
+              <button 
+                className="home-button"
+                onClick={handleBackToHome}
+              >
+                🏠 Retour à l'accueil
+              </button>
+            </>
+          ) : (
+            <button 
+              className="home-button"
+              onClick={handleBackToHome}
+            >
+              🏠 Retour à l'accueil
+            </button>
+          )}
         </div>
       </main>
 
