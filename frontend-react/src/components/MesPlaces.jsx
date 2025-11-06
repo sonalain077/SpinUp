@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getVehicleTypeLabel } from '../lib/vehicleTypes';
+import { toast } from 'react-toastify';
 import './MesPlaces.css';
 
 const MesPlaces = () => {
@@ -12,6 +13,21 @@ const MesPlaces = () => {
   const [exitLoading, setExitLoading] = useState(false);
   const [exitMessage, setExitMessage] = useState(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  
+  // Track scheduled timers to clear them on unmount
+  const timersRef = useRef([]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (timersRef.current && timersRef.current.length) {
+        timersRef.current.forEach(id => clearTimeout(id));
+        timersRef.current = [];
+      }
+    };
+  }, []);
+
 
   // Fonction pour rechercher une réservation
   const handleSearch = async (e) => {
@@ -50,11 +66,105 @@ const MesPlaces = () => {
       console.log('✅ Réservation trouvée:', data);
       setReservation(data);
 
+      // Schedule toast notifications for end time, +10min, +30min
+      scheduleToastNotifications(data);
+
     } catch (err) {
       console.error('❌ Erreur:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Schedule toast notifications based on reservation timing
+  const scheduleToastNotifications = (reservationData) => {
+    try {
+      const start = new Date(reservationData.startAt);
+      const endMs = start.getTime() + (reservationData.durationMinutes * 60 * 1000);
+      const now = Date.now();
+
+      const scheduleToast = (delayMs, message, options = {}) => {
+        const MAX_TIMEOUT = 2147483647; // ~24.8 days
+        if (delayMs <= 0) {
+          // If already past, show immediately
+          toast(message, options);
+          return null;
+        }
+        if (delayMs > MAX_TIMEOUT) {
+          console.warn('Delay too large for setTimeout; toast will not be scheduled:', delayMs);
+          return null;
+        }
+
+        const id = setTimeout(() => {
+          toast(message, options);
+        }, delayMs);
+
+        // Keep reference so we can clear on unmount
+        if (timersRef.current) timersRef.current.push(id);
+        return id;
+      };
+
+      // Compute time until end and overtime
+      const delayUntilEnd = endMs - now;
+      const minutesAfterEnd = -Math.floor(delayUntilEnd / (60 * 1000));
+      
+      const plate = reservationData.licencePlate;
+
+      // Only schedule the most relevant notification based on current time
+      if (minutesAfterEnd >= 30) {
+        // Already 30+ minutes late - show critical notification immediately
+        scheduleToast(
+          0,
+          `🚨 Dépassement +30 min — ${plate}. Agent peut constater une infraction.`,
+          { type: 'error' }
+        );
+      } else if (minutesAfterEnd >= 10) {
+        // Already 10+ minutes late - show warning immediately
+        scheduleToast(
+          0,
+          `⚠️ Dépassement +10 min — ${plate}. Risque d'amende, vérifiez votre véhicule.`,
+          { type: 'warning' }
+        );
+      } else if (minutesAfterEnd > 0) {
+        // Already past end time but less than 10 min - show end notification immediately
+        scheduleToast(
+          0,
+          `🅿️ Stationnement terminé — ${plate}. Votre temps de stationnement est écoulé.`,
+          { type: 'info' }
+        );
+      } else {
+        // Not yet ended - schedule future notifications smartly
+        const delay10 = delayUntilEnd + 10 * 60 * 1000; // +10 minutes after end
+        const delay30 = delayUntilEnd + 30 * 60 * 1000; // +30 minutes after end
+
+        // Schedule end notification
+        scheduleToast(
+          delayUntilEnd,
+          `🅿️ Stationnement terminé — ${plate}. Votre temps de stationnement est écoulé.`,
+          { type: 'info' }
+        );
+
+        // Only schedule +10min if we have time before +30min
+        if (delay10 > 0 && delay30 - delay10 >= 19 * 60 * 1000) {
+          scheduleToast(
+            delay10,
+            `⚠️ Dépassement +10 min — ${plate}. Risque d'amende, vérifiez votre véhicule.`,
+            { type: 'warning' }
+          );
+        }
+
+        // Schedule +30min
+        if (delay30 > 0) {
+          scheduleToast(
+            delay30,
+            `🚨 Dépassement +30 min — ${plate}. Agent peut constater une infraction.`,
+            { type: 'error' }
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Unable to schedule toast notifications', err);
     }
   };
 
