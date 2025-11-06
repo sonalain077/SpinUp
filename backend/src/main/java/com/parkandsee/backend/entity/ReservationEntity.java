@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 import java.time.Duration;
 
 @Entity
-@Table(name = "reservations", indexes = {
-    @Index(name = "idx_licence_plate", columnList = "licencePlate"),
-    @Index(name = "idx_start_at", columnList = "startAt"),
-    @Index(name = "idx_status", columnList = "status")
+@Table(name = "reservations_old", indexes = {
+    @Index(name = "idx_licence_plate_old", columnList = "licencePlate"),
+    @Index(name = "idx_start_at_old", columnList = "startAt"),
+    @Index(name = "idx_status_old", columnList = "status")
 })
 public class ReservationEntity {
 

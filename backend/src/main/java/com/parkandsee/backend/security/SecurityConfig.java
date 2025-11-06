@@ -25,11 +25,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/parking/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/agent/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()  // MODE DEV: tout est autorisé
             );
 
         return http.build();

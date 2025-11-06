@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getVehicleTypeOptions } from '../lib/vehicleTypes';
+import { createReservation } from '../services/reservationApi';
+import { getParkingIdByName, calculatePriceCents, formatPrice } from '../services/parkingConfig';
 import './ParkingReservation.css';
 
 const ParkingReservation = () => {
@@ -219,7 +221,7 @@ const ParkingReservation = () => {
     }
   };
 
-  // Soumission du formulaire
+  // Soumission du formulaire - Redirection vers page de paiement
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -233,94 +235,51 @@ const ParkingReservation = () => {
     setResult('');
     
     try {
-      // Formatage de la date pour le backend (format exact : yyyy-MM-dd'T'HH:mm:ss)
-      let startAtValue = formData.startAt;
-      
-      console.log('🕐 Date originale du formulaire:', startAtValue);
-      
-      // Si c'est un datetime-local (format: 2025-10-15T23:30), ajouter les secondes
-      if (startAtValue && startAtValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
-        startAtValue += ':00';  // Ajouter :00 pour les secondes
-        console.log('🕐 Date après ajout des secondes:', startAtValue);
-      }
-      // Si c'est déjà complet mais sans secondes (2025-10-15T23:30:), ajouter 00
-      else if (startAtValue && startAtValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:$/)) {
-        startAtValue += '00';
-        console.log('🕐 Date après ajout final des secondes:', startAtValue);
+      // 1. Mapper l'adresse vers parkingId
+      const parkingId = getParkingIdByName(formData.address);
+      if (!parkingId) {
+        throw new Error(`Parking inconnu: ${formData.address}`);
       }
       
-      // Validation finale du format
-      const dateFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
-      if (!dateFormatRegex.test(startAtValue)) {
-        throw new Error(`Format de date invalide: ${startAtValue}. Attendu: yyyy-MM-ddTHH:mm:ss`);
-      }
-      
-      console.log('📅 Date finale formatée pour backend:', startAtValue);
-      
-      // Gestion spéciale pour "Démo infraction" (durée = 1 minute pour faciliter les tests)
+      // 2. Gérer la durée spéciale pour démo infraction
       const isDemoInfraction = parseInt(formData.durationMinutes) === 0;
-      const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes); // 1 min pour démo
+      const finalDuration = isDemoInfraction ? 1 : parseInt(formData.durationMinutes);
       
-      const reservationData = {
+      // 3. Calculer le montant en centimes
+      const amountCents = calculatePriceCents(finalDuration);
+      
+      console.log('� Préparation des données pour paiement:');
+      console.log('- Plaque:', formData.licencePlate);
+      console.log('- Type:', formData.vehicleType);
+      console.log('- Parking:', formData.address, '→', parkingId);
+      console.log('- Début:', formData.startAt);
+      console.log('- Durée:', finalDuration, 'min');
+      console.log('- Prix:', formatPrice(amountCents), '€', `(${amountCents} centimes)`);
+      console.log('- Mode:', isDemoInfraction ? '🎬 DEMO INFRACTION' : 'Normal');
+      
+      // 4. Préparer les données de réservation pour la page de paiement
+      const reservationDataForPayment = {
         licencePlate: formData.licencePlate,
         vehicleType: formData.vehicleType,
-        startAt: startAtValue,
-        durationMinutes: finalDuration,
         address: formData.address,
-        paymentToken: 'pending-payment' // Token temporaire en attente de paiement
+        parkingId,
+        startAt: formData.startAt,
+        durationMinutes: finalDuration,
+        amountCents
       };
       
-      // Validation des données avant envoi
-      console.log('🔍 VALIDATION COMPLETE DES DONNEES:');
-      console.log('- Mode:', isDemoInfraction ? '🎬 DEMO INFRACTION' : 'Normal');
-      console.log('- Plaque:', `"${reservationData.licencePlate}"`);
-      console.log('- Type véhicule:', `"${reservationData.vehicleType}"`);
-      console.log('- Date:', `"${reservationData.startAt}"`);
-      console.log('- Durée:', reservationData.durationMinutes, typeof reservationData.durationMinutes);
-      console.log('- Adresse:', `"${reservationData.address}"`);
-      
-      // Vérifications critiques avec messages détaillés
-      if (!reservationData.licencePlate || reservationData.licencePlate.trim() === '') {
-        throw new Error('Plaque d\'immatriculation vide ou invalide');
-      }
-      if (!reservationData.vehicleType || reservationData.vehicleType.trim() === '') {
-        throw new Error('Type de véhicule vide ou invalide');
-      }
-      if (!reservationData.startAt || reservationData.startAt.trim() === '') {
-        throw new Error('Date de début vide ou invalide');
-      }
-      // Autoriser 0.167 pour démo infraction
-      if (isNaN(reservationData.durationMinutes) || reservationData.durationMinutes < 0) {
-        throw new Error(`Durée invalide: ${reservationData.durationMinutes}`);
-      }
-      if (!reservationData.address || reservationData.address.trim() === '') {
-        throw new Error('Adresse vide ou invalide');
-      }
-      
-      console.log('✅ Toutes les validations passées');
-      
-      // Création d'une pré-réservation avant le paiement
-      console.log('🚀 Création de la pré-réservation:', reservationData);
-      
-      const response = await reserveParking(reservationData);
-      console.log('✅ Pré-réservation créée:', response);
-      
-      // Calcul du prix total
-      const totalPrice = calculatePrice(reservationData.durationMinutes);
-      
-      // Redirection vers la page de paiement avec les détails de la réservation
-      navigate('/payment', { 
-        state: { 
-          reservationData: reservationData,
-          reservationResponse: response,
-          amount: totalPrice,
-          formattedAmount: `${totalPrice}€`
-        } 
+      // 5. Rediriger vers la page de paiement avec les données
+      navigate('/payment', {
+        state: {
+          reservationData: reservationDataForPayment,
+          amount: amountCents,
+          reservationResponse: null // Sera rempli après le paiement
+        }
       });
       
     } catch (error) {
-      console.error('❌ Erreur lors de la réservation:', error);
-      setResult(`❌ Erreur: ${error.message || 'Problème de connexion au serveur'}`);
+      console.error('❌ Erreur lors de la préparation:', error);
+      setResult(`❌ Erreur: ${error.message || 'Problème de préparation des données'}`);
       setResultType('error');
     } finally {
       setLoading(false);

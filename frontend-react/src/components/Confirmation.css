@@ -255,11 +255,13 @@
 /* Actions */
 .confirmation-actions {
   display: flex;
+  gap: 15px;
   justify-content: center;
   margin-top: 20px;
 }
 
-.home-button {
+.home-button,
+.dashboard-button {
   padding: 15px 30px;
   background: linear-gradient(45deg, #667eea, #764ba2);
   color: white;
@@ -272,9 +274,19 @@
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.home-button:hover {
+.dashboard-button {
+  background: linear-gradient(45deg, #11998e, #38ef7d);
+  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+}
+
+.home-button:hover,
+.dashboard-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.dashboard-button:hover {
+  box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
 }
 
 /* Footer */

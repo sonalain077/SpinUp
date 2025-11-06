@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getVehicleTypeLabel } from '../lib/vehicleTypes';
+import { createReservation } from '../services/reservationApi';
 import './Payment.css';
 
 const Payment = () => {
@@ -121,11 +122,33 @@ const Payment = () => {
       console.log('Données:', paymentData);
       console.log('Montant:', amount);
 
-      // Redirection vers la page de confirmation
+      // Mapper la méthode de paiement au format API
+      const paymentMethodMap = {
+        'carte-bleue': 'CARD',
+        'lydia': 'LYDIA',
+        'paypal': 'PAYPAL'
+      };
+      const apiPaymentMethod = paymentMethodMap[paymentMethod] || 'CARD';
+
+      // Appeler l'API de création de réservation
+      console.log('🚀 Appel API de création de réservation...');
+      const response = await createReservation({
+        plate: reservationData.licencePlate,
+        vehicleType: reservationData.vehicleType,
+        parkingId: reservationData.parkingId,
+        startAt: reservationData.startAt,
+        durationMinutes: reservationData.durationMinutes,
+        paymentMethod: apiPaymentMethod,
+        amountCents: reservationData.amountCents
+      });
+
+      console.log('✅ Réservation créée:', response);
+
+      // Redirection vers la page de confirmation avec la réponse de l'API
       navigate('/confirmation', {
         state: {
           reservationData,
-          reservationResponse,
+          reservationResponse: response,
           amount,
           paymentMethod,
           success: true
@@ -133,7 +156,7 @@ const Payment = () => {
       });
     } catch (error) {
       console.error('❌ Erreur lors du paiement:', error);
-      alert('Erreur lors du paiement. Veuillez réessayer.');
+      alert(`Erreur lors de la création de la réservation: ${error.message || 'Veuillez réessayer.'}`);
     }
   };
 

@@ -44,22 +44,50 @@ const AgentDashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [overdueRes, occupationRes, zonesRes, historyRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/agent/overdue`),
-        fetch(`${API_BASE_URL}/agent/occupation`),
-        fetch(`${API_BASE_URL}/agent/occupation/by-zone`),
-        fetch(`${API_BASE_URL}/agent/overdue/history`)
-      ]);
+      
+      // NOUVELLE API - 1 seul appel
+      const response = await fetch(`${API_BASE_URL}/agent/overview`);
 
-      if (overdueRes.ok && occupationRes.ok && zonesRes.ok && historyRes.ok) {
-        const overdueData = await overdueRes.json();
-        const occupationData = await occupationRes.json();
-        const zonesData = await zonesRes.json();
-        const historyData = await historyRes.json();
+      if (response.ok) {
+        const overview = await response.json();
+        console.log('📊 Overview reçu:', overview);
+
+        // Convertir au format attendu par le dashboard
+        const totalVehicles = overview.totals.parkedVehicles;
+        const totalCapacity = overview.totals.capacity;
+
+        // Construire les données de zones (perParking)
+        const zonesData = overview.perParking.map(p => ({
+          parkingName: p.parkingName,
+          occupiedPlaces: p.used,
+          totalCapacity: p.capacity,
+          occupationRate: p.capacity > 0 ? (p.used / p.capacity) * 100 : 0
+        }));
+
+        // Construire les données d'infraction
+        const overdueData = overview.infringements.map(inf => ({
+          id: inf.reservationId || `${inf.plate}-${inf.parkingName}`,
+          licencePlate: inf.plate,
+          vehicleType: inf.vehicleType,
+          address: inf.parkingName,
+          startAt: inf.startAt,
+          durationMinutes: inf.durationMinutes,
+          status: 'ACTIVE', // Les infractions sont toujours actives
+          exceededMinutes: inf.exceededMinutes,
+          severity: inf.severity
+        }));
+
+        // Données d'occupation globale
+        const occupationData = {
+          totalActive: totalVehicles,
+          totalCapacity: totalCapacity,
+          occupationRate: overview.totals.saturationIndex * 100,
+          availablePlaces: totalCapacity - totalVehicles
+        };
 
         console.log('\n🅿️ ============ DONNÉES PARKINGS REÇUES ============');
         console.log('📊 Nombre de parkings reçus:', zonesData.length);
-        console.log('📊 Total véhicules dans ces parkings:', zonesData.reduce((sum, z) => sum + z.occupiedPlaces, 0));
+        console.log('📊 Total véhicules dans ces parkings:', totalVehicles);
         zonesData.forEach(zone => {
           console.log(`  ${zone.parkingName}: ${zone.occupiedPlaces}/${zone.totalCapacity} (${zone.occupationRate.toFixed(0)}%)`);
         });
@@ -67,74 +95,24 @@ const AgentDashboard = () => {
 
         console.log('📊 ============ ANALYSE COMPLETE DES TICKETS ============');
         console.log('📊 Total tickets reçus du backend:', overdueData.length);
-        console.log('\n📋 DETAIL COMPLET DE CHAQUE TICKET:');
-        overdueData.forEach((t, index) => {
-          const minutes = calculateOverdueMinutes(t);
-          const isOverdue = minutes > 0;
-          console.log(`\n${index + 1}. ${t.licencePlate} @ ${t.address}`);
-          console.log(`   Status: ${t.status}`);
-          console.log(`   Excès: ${minutes} min (${isOverdue ? 'EN EXCES' : 'OK'})`);
-          console.log(`   Début: ${new Date(t.startAt).toLocaleString('fr-FR')}`);
-          console.log(`   Durée payée: ${t.durationMinutes} min`);
-        });
-        
-        // Calculer les stats dynamiquement à partir des tickets
-        // "En excès maintenant" = tickets ACTIVE qui sont vraiment en excès
-        console.log('\n🔍 ============ FILTRAGE POUR "EN EXCES MAINTENANT" ============');
-        const activeOverdueTickets = overdueData.filter(t => {
-          const minutes = calculateOverdueMinutes(t);
-          const isActive = t.status === 'ACTIVE';
-          const isOverdue = minutes > 0;
-          const shouldCount = isActive && isOverdue;
-          
-          console.log(`${t.licencePlate}: status=${t.status}, excès=${minutes}min → ${shouldCount ? '✅ COMPTÉ' : '❌ EXCLU'}`);
-          
-          return shouldCount;
-        });
-        const currentOverdue = activeOverdueTickets.length;
-        
-        console.log('\n✅ RESULTAT FINAL "EN EXCES MAINTENANT":', currentOverdue);
-        console.log('   Tickets comptés:', activeOverdueTickets.map(t => t.licencePlate));
-        
-        // "Déjà signalés" = tickets avec statut SIGNALE
-        console.log('\n🔍 ============ FILTRAGE POUR "DEJA SIGNALES" ============');
-        const signaledTickets = overdueData.filter(t => {
-          const isSignaled = t.status === 'SIGNALE';
-          console.log(`${t.licencePlate}: status=${t.status} → ${isSignaled ? '✅ COMPTÉ' : '❌ EXCLU'}`);
-          return isSignaled;
-        });
-        const markedOverdue = signaledTickets.length;
-        
-        console.log('\n✅ RESULTAT FINAL "DEJA SIGNALES":', markedOverdue);
-        console.log('   Tickets comptés:', signaledTickets.map(t => t.licencePlate));
-        
-        const regularized = historyData.length;
-        
-        // Calculer temps total excès et moyenne uniquement sur les tickets en infraction (ACTIVE en excès + SIGNALE)
-        const displayedTickets = [...activeOverdueTickets, ...signaledTickets];
-        
-        console.log('\n⏱️ ============ CALCUL TEMPS TOTAL EXCÈS ============');
-        const totalOverdueMinutes = displayedTickets.reduce((sum, t) => {
-          const overdueMinutes = calculateOverdueMinutes(t);
-          console.log(`  ${t.licencePlate} (${t.status}): ${overdueMinutes} min d'excès`);
-          return sum + overdueMinutes;
-        }, 0);
-        
-        console.log(`\n📊 SOMME TOTALE: ${totalOverdueMinutes} minutes d'excès cumulés`);
-        console.log(`   = ${Math.floor(totalOverdueMinutes / 60)}h ${totalOverdueMinutes % 60}min`);
-        console.log(`   Nombre de tickets comptés: ${displayedTickets.length}\n`);
-        
-        const averageOverdueMinutes = displayedTickets.length > 0 
-          ? Math.round(totalOverdueMinutes / displayedTickets.length) 
+
+        // Calculer les stats à partir des infractions
+        const currentOverdue = overdueData.length; // Toutes les infractions
+        const markedOverdue = 0; // Pas de distinction signalé/non-signalé dans la nouvelle API
+        const regularized = 0; // Pas d'historique dans la nouvelle API
+
+        const totalOverdueMinutes = overdueData.reduce((sum, inf) => sum + inf.exceededMinutes, 0);
+        const averageOverdueMinutes = overdueData.length > 0 
+          ? Math.round(totalOverdueMinutes / overdueData.length) 
           : 0;
 
         console.log('\n📊 ============ STATISTIQUES FINALES ============');
-        console.log('⏰ En excès maintenant (ACTIVE en excès):', currentOverdue, 'véhicules');
-        console.log('🚨 Déjà signalés (SIGNALE):', markedOverdue, 'véhicules');
+        console.log('⏰ En excès maintenant:', currentOverdue, 'véhicules');
+        console.log('🚨 Déjà signalés:', markedOverdue, 'véhicules');
         console.log('✅ Régularisés:', regularized, 'véhicules');
-        console.log('📊 Total infractions affichées:', displayedTickets.length, 'tickets');
-        console.log('📊 Moyenne excès:', averageOverdueMinutes, 'min (', Math.floor(averageOverdueMinutes / 60), 'h', averageOverdueMinutes % 60, 'min)');
-        console.log('⏱️ Temps total excès:', totalOverdueMinutes, 'min (', Math.floor(totalOverdueMinutes / 60), 'h', totalOverdueMinutes % 60, 'min)');
+        console.log('📊 Total infractions affichées:', overdueData.length, 'tickets');
+        console.log('📊 Moyenne excès:', averageOverdueMinutes, 'min');
+        console.log('⏱️ Temps total excès:', totalOverdueMinutes, 'min');
         console.log('============================================\n');
 
         setOverdueReservations(overdueData);
@@ -147,7 +125,7 @@ const AgentDashboard = () => {
         });
         setOccupation(occupationData);
         setParkingZones(zonesData);
-        setHistory(historyData);
+        setHistory([]); // Pas d'historique dans la nouvelle API
         calculateAnalytics(overdueData);
       }
     } catch (error) {
