@@ -7,7 +7,9 @@ import Confirmation from './components/Confirmation';
 import MesPlaces from './components/MesPlaces';
 import RallongerStationnement from './components/RallongerStationnement';
 import ExtensionConfirmation from './components/ExtensionConfirmation';
+import Login from './components/Login';
 import AgentDashboard from './components/AgentDashboard';
+import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
 function App() {
@@ -73,7 +75,15 @@ function App() {
           <Route path="/mes-places" element={<MesPlaces />} />
           <Route path="/rallonger-stationnement" element={<RallongerStationnement />} />
           <Route path="/extension-confirmation" element={<ExtensionConfirmation />} />
-          <Route path="/agent-dashboard" element={<AgentDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/agent-dashboard" 
+            element={
+              <PrivateRoute roleRequired="agent">
+                <AgentDashboard />
+              </PrivateRoute>
+            } 
+          />
         </Routes>
       </div>
     </Router>

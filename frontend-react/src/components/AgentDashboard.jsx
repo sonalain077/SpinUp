@@ -9,6 +9,15 @@ const AgentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [serverHealth, setServerHealth] = useState('UP');
+
+  // Fonction de déconnexion
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('username');
+    navigate('/login');
+  };
   
   // Données de l'overview
   const [stats, setStats] = useState({
@@ -247,6 +256,9 @@ const AgentDashboard = () => {
             <div className={`server-status ${serverHealth === 'UP' ? 'connected' : 'disconnected'}`}>
               {serverHealth === 'UP' ? '✅ Serveur connecté' : '❌ Serveur déconnecté'}
             </div>
+            <button className="btn-logout" onClick={handleLogout}>
+              🚪 Déconnexion
+            </button>
             <button className="btn-home" onClick={() => navigate('/')}>
               🏠 Retour Accueil
             </button>
@@ -434,19 +446,19 @@ const AgentDashboard = () => {
                     
                     <div className="infringement-details">
                       <div className="detail-row">
-                        <span className="detail-label">Type:</span>
+                        <span className="detail-label">🚗 Type:</span>
                         <span>{getVehicleTypeLabel(item.vehicleType)}</span>
                       </div>
                       <div className="detail-row">
-                        <span className="detail-label">Durée payée:</span>
+                        <span className="detail-label">💳 Durée payée:</span>
                         <span>{formatDuration(item.paidMinutes)}</span>
                       </div>
                       <div className="detail-row">
-                        <span className="detail-label">Début:</span>
+                        <span className="detail-label">🕐 Début:</span>
                         <span>{formatDate(new Date(item.startAt * 1000))}</span>
                       </div>
                       <div className="detail-row highlight">
-                        <span className="detail-label">Excès:</span>
+                        <span className="detail-label">⏱️ Excès:</span>
                         <span className="excess-value">{formatDuration(item.exceededMinutes)}</span>
                       </div>
                     </div>

@@ -9,7 +9,7 @@ const HomePage = () => {
     if (userType === 'user') {
       navigate('/parking-reservation');
     } else if (userType === 'agent') {
-      navigate('/agent-dashboard');
+      navigate('/login');
     }
   };
 
