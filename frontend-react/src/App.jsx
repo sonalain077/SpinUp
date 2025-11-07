@@ -9,9 +9,6 @@ import RallongerStationnement from './components/RallongerStationnement';
 import ExtensionConfirmation from './components/ExtensionConfirmation';
 import AgentDashboard from './components/AgentDashboard';
 import './App.css';
-// react-toastify for in-app notifications
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -24,12 +21,16 @@ function App() {
   const checkBackendConnection = async () => {
     try {
       console.log('🔍 Vérification de la connexion backend...');
-      const response = await fetch('http://localhost:8081/api/parking/status');
+      const response = await fetch('http://localhost:8081/health');
       
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Backend connecté:', data);
-        setBackendStatus('connected');
+        if (data.status === 'UP') {
+          setBackendStatus('connected');
+        } else {
+          setBackendStatus('error');
+        }
       } else {
         console.warn('⚠️ Backend répond mais avec erreur:', response.status);
         setBackendStatus('error');
@@ -74,19 +75,6 @@ function App() {
           <Route path="/extension-confirmation" element={<ExtensionConfirmation />} />
           <Route path="/agent-dashboard" element={<AgentDashboard />} />
         </Routes>
-        {/* Toast container placed at app root so any component can fire toasts */}
-        <ToastContainer 
-          position="top-right" 
-          autoClose={5000} 
-          hideProgressBar={false} 
-          newestOnTop={true}
-          closeOnClick 
-          rtl={false} 
-          pauseOnFocusLoss 
-          draggable 
-          pauseOnHover
-          limit={1}
-        />
       </div>
     </Router>
   );
