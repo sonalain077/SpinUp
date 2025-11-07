@@ -107,7 +107,7 @@ public class AgentService {
         LocalDateTime now = LocalDateTime.now();
         
         List<ReservationEntity> exceededReservations = reservationRepository.findAll().stream()
-            .filter(r -> r.getStatus() == ReservationStatus.ACTIVE)
+            .filter(r -> r.getStatus() == ReservationStatus.ACTIVE || r.getStatus() == ReservationStatus.SIGNALE)
             .filter(r -> r.getEndAt() != null && r.getEndAt().isBefore(now))
             .collect(Collectors.toList());
         

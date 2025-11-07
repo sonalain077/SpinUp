@@ -63,35 +63,6 @@ public class AgentController {
     }
 
     /**
-     * POST /api/agent/infringements/{reservationId}/report
-     * Signaler une infraction
-     */
-    @PostMapping("/infringements/{reservationId}/report")
-    public ResponseEntity<Map<String, Object>> reportInfringement(@PathVariable String reservationId) {
-        try {
-            Optional<ReservationEntity> optReservation = reservationRepository.findById(reservationId);
-            
-            if (optReservation.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            ReservationEntity reservation = optReservation.get();
-            reservation.setStatus(ReservationStatus.SIGNALE);
-            reservationRepository.save(reservation);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("reported", true);
-            response.put("reservationId", reservationId);
-            response.put("status", "SIGNALE");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    /**
      * POST /api/agent/infringements/{reservationId}/regularize
      * Régulariser une infraction
      */
