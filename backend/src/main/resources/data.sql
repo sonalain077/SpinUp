@@ -1,6 +1,9 @@
 -- Données de test simples pour Park & See
 DELETE FROM reservations;
 
+-- Réinitialiser tous les véhicules SIGNALE en ACTIVE pour la présentation
+UPDATE reservations SET status = 'ACTIVE' WHERE status = 'SIGNALE';
+
 -- Quelques réservations de test avec syntaxe H2 compatible (INSERT séparés)
 INSERT INTO reservations (id, licence_plate, vehicle_type, start_at, duration_minutes, address, payment_amount, status, created_at, updated_at) VALUES ('res-001', 'AB-123-CD', 'CAR', DATEADD('MINUTE', -25, CURRENT_TIMESTAMP), 120, 'Parking Centre Ville', 3.00, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 INSERT INTO reservations (id, licence_plate, vehicle_type, start_at, duration_minutes, address, payment_amount, status, created_at, updated_at) VALUES ('res-002', 'EF-456-GH', 'CAR', DATEADD('MINUTE', -10, CURRENT_TIMESTAMP), 60, 'Parking Gare', 1.50, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

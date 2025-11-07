@@ -122,23 +122,6 @@ const AgentDashboard = () => {
     }
   };
 
-  const handleReport = async (reservationId) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/agent/infringements/${reservationId}/report`,
-        { method: 'POST' }
-      );
-      
-      if (response.ok) {
-        showSuccessMessage('✅ Véhicule signalé avec succès');
-        // Recharger les données
-        await loadData();
-      }
-    } catch (error) {
-      console.error('❌ Erreur signalement:', error);
-    }
-  };
-
   const handleRegularize = async (reservationId) => {
     try {
       const response = await fetch(
@@ -303,15 +286,7 @@ const AgentDashboard = () => {
             <div className="stat-icon">⏰</div>
             <div className="stat-content">
               <div className="stat-value">{stats.currentOverdue}</div>
-              <div className="stat-label">En excès maintenant</div>
-            </div>
-          </div>
-
-          <div className="stat-card warning">
-            <div className="stat-icon">🚨</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.markedOverdue}</div>
-              <div className="stat-label">Déjà signalés</div>
+              <div className="stat-label">Véhicules en excès</div>
             </div>
           </div>
 
@@ -454,7 +429,6 @@ const AgentDashboard = () => {
                     <div className="infringement-header">
                       <div className="plate-badge">{item.plate}</div>
                       <div className={`severity-badge ${item.severity.toLowerCase()}`}>
-                        {item.severity === 'LEGER' ? '⚠️ LÉGER' : '🚨 GRAVE'}
                       </div>
                     </div>
                     
@@ -478,24 +452,12 @@ const AgentDashboard = () => {
                     </div>
 
                     <div className="infringement-actions">
-                      {!item.reported && !item.regularized && (
-                        <>
-                          <button 
-                            className="btn-report"
-                            onClick={() => handleReport(item.reservationId)}
-                          >
-                            🚨 Signaler
-                          </button>
-                          <button 
-                            className="btn-regularize"
-                            onClick={() => handleRegularize(item.reservationId)}
-                          >
-                            ✅ Excès régularisé
-                          </button>
-                        </>
-                      )}
-                      {item.reported && !item.regularized && (
-                        <div className="status-badge reported">Déjà signalé</div>
+                      {!item.regularized && (
+                        <button 
+                          className="btn-regularize"
+                          onClick={() => handleRegularize(item.reservationId)}
+                        >
+                        </button>
                       )}
                       {item.regularized && (
                         <div className="status-badge regularized">Régularisé</div>
