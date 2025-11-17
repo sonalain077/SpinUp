@@ -10,6 +10,7 @@ import ExtensionConfirmation from './components/ExtensionConfirmation';
 import Login from './components/Login';
 import AgentDashboard from './components/AgentDashboard';
 import PrivateRoute from './components/PrivateRoute';
+import { ENDPOINTS } from './config';
 import './App.css';
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
   const checkBackendConnection = async () => {
     try {
       console.log('🔍 Vérification de la connexion backend...');
-      const response = await fetch('http://localhost:8081/health');
+      const response = await fetch(ENDPOINTS.health);
       
       if (response.ok) {
         const data = await response.json();

@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 import './Login.css';
 
 const Login = () => {
@@ -21,7 +22,7 @@ const Login = () => {
     }
 
     try {
-      const resp = await fetch('http://localhost:8081/api/auth/login', {
+      const resp = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

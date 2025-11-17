@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getVehicleTypeLabel } from '../lib/vehicleTypes';
+import { ENDPOINTS } from '../config';
 import './Payment.css';
 
 const Payment = () => {
@@ -130,7 +131,7 @@ const Payment = () => {
           paymentToken: paymentMethod || 'demo'
         };
         console.log('📤 Envoi paiement infraction:', payload);
-        const response = await fetch('http://localhost:8081/api/parking/pay-overdue', {
+        const response = await fetch(ENDPOINTS.parking.payOverdue, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -148,7 +149,7 @@ const Payment = () => {
         // Sortie automatique après régularisation (suppression de la réservation)
         let autoExited = false;
         try {
-          const exitResp = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${reservationId}`, {
+          const exitResp = await fetch(`${ENDPOINTS.parking.confirmExit}?reservationId=${reservationId}`, {
             method: 'POST',
             headers: { 'Accept': 'application/json' }
           });
@@ -178,8 +179,8 @@ const Payment = () => {
         });
       } else {
         // Paiement normal de réservation
-        console.log('� Envoi de la réservation au backend...');
-        const response = await fetch('http://localhost:8081/api/parking/reserve', {
+        console.log('📝 Envoi de la réservation au backend...');
+        const response = await fetch(ENDPOINTS.parking.reserve, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

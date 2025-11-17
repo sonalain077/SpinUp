@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 import './ActiveVehiclesList.css';
 
 const ActiveVehiclesList = () => {
@@ -11,7 +12,7 @@ const ActiveVehiclesList = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:8081/api/vehicles/active');
+      const response = await fetch(`${API_URL}/vehicles/active`);
       if (!response.ok) {
         throw new Error('Erreur lors de la récupération des véhicules');
       }

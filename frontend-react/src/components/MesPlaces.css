@@ -135,6 +135,133 @@
   to { transform: rotate(360deg); }
 }
 
+/* Sélecteur de méthode de recherche */
+.search-method-selector {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.method-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #166534;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.method-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.method-btn {
+  flex: 1;
+  min-width: 250px;
+  padding: 1.25rem 1.5rem;
+  border: 3px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.method-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.method-btn.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: #059669;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.method-btn.active .method-icon,
+.method-btn.active .method-text,
+.method-btn.active .method-info {
+  color: white;
+}
+
+.method-icon {
+  font-size: 2rem;
+}
+
+.method-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
+
+.method-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.method-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #78350f;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Champs de saisie spécialisés */
+.plate-input {
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 3px solid #10b981;
+}
+
+.plate-input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.plate-input::placeholder {
+  font-weight: 400;
+  letter-spacing: 1px;
+  opacity: 0.6;
+}
+
 /* Message d'aide */
 .help-message {
   background: #e8f4f8;

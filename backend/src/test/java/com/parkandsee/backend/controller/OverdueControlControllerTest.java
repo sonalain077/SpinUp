@@ -29,9 +29,6 @@ class OverdueControlControllerTest {
     @MockBean
     private OverdueControlService overdueControlService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private ReservationEntity overdueReservation;
 
     @BeforeEach

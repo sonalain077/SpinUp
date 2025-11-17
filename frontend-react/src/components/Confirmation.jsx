@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getVehicleTypeLabel } from '../lib/vehicleTypes';
+import { ENDPOINTS } from '../config';
 import './Confirmation.css';
 
 const Confirmation = () => {
@@ -31,7 +32,7 @@ const Confirmation = () => {
         alert('ID de réservation manquant');
         return;
       }
-      const resp = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${id}`, {
+      const resp = await fetch(`${ENDPOINTS.parking.confirmExit}?reservationId=${id}`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -105,13 +106,29 @@ const Confirmation = () => {
             <div className="reservation-info">
               <h3>📋 Détails de votre réservation</h3>
               
-              {/* ID de réservation mis en avant */}
-              <div className="reservation-id-highlight">
-                <div className="id-label">🆔 Numéro de réservation {overdue ? '(régularisée)' : '(conservez-le pour retrouver votre place)'} :</div>
-                <div className="id-value" title="Cliquez pour copier">
+              {/* Message principal : retrouver avec la plaque */}
+              <div className="licence-plate-highlight">
+                <div className="plate-main-message">
+                  <div className="plate-icon">🔑</div>
+                  <div className="plate-content">
+                    <div className="plate-title">Retrouvez votre réservation facilement !</div>
+                    <div className="plate-instruction">
+                      Utilisez votre <strong>plaque d'immatriculation</strong> dans <strong>"Voir mes places"</strong> :
+                    </div>
+                    <div className="plate-value-box">
+                      <span className="plate-emoji">🚗</span>
+                      <span className="plate-number">{reservationData.licencePlate}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ID de réservation en secondaire */}
+              <div className="reservation-id-secondary">
+                <div className="id-label">🆔 Numéro de réservation (optionnel) :</div>
+                <div className="id-value-small" title="Vous pouvez aussi utiliser cet ID">
                   {reservationResponse?.reservationId || 'R-' + Date.now()}
                 </div>
-                <div className="id-help">💡 Utilisez cet identifiant dans "Voir mes places" pour consulter votre réservation</div>
               </div>
               
               <div className="info-grid">
@@ -166,9 +183,10 @@ const Confirmation = () => {
             <div className="important-info">
               <h4>⚠️ Informations importantes</h4>
               <ul>
-                <li>📱 Conservez votre numéro de réservation : <strong>{reservationResponse?.reservationId || 'R-' + Date.now()}</strong></li>
-                {!overdue && <li>📧 Une confirmation a été envoyée par email. </li>}
-                {overdue && <li>⚠️ Votre statut de réservation est maintenant: Régularisé.</li>}
+                <li>� <strong>Votre plaque : {reservationData.licencePlate}</strong> - Utilisez-la pour retrouver votre réservation</li>
+                <li>📱 Vous pouvez aussi utiliser l'ID : <strong>{reservationResponse?.reservationId || 'R-' + Date.now()}</strong></li>
+                {!overdue && <li>📧 Une confirmation a été envoyée par email.</li>}
+                {overdue && <li>⚠️ Votre statut de réservation est maintenant : Régularisé.</li>}
               </ul>
             </div>
 

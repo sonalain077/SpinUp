@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getVehicleTypeLabel } from '../lib/vehicleTypes';
 import { toast } from 'react-toastify';
+import { ENDPOINTS } from '../config';
 import './MesPlaces.css';
 
 const MesPlaces = () => {
   const navigate = useNavigate();
   const [reservationId, setReservationId] = useState('');
+  const [licencePlate, setLicencePlate] = useState('');
+  const [searchMethod, setSearchMethod] = useState('plate'); // 'plate' ou 'id'
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +36,13 @@ const MesPlaces = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     
-    if (!reservationId.trim()) {
+    // Validation selon la méthode de recherche
+    if (searchMethod === 'plate' && !licencePlate.trim()) {
+      setError('Veuillez saisir une plaque d\'immatriculation');
+      return;
+    }
+    
+    if (searchMethod === 'id' && !reservationId.trim()) {
       setError('Veuillez saisir un ID de réservation');
       return;
     }
@@ -43,9 +52,19 @@ const MesPlaces = () => {
     setReservation(null);
 
     try {
-      console.log('🔍 Recherche de la réservation:', reservationId);
+      console.log('🔍 Recherche de la réservation...');
       
-      const response = await fetch(`http://localhost:8081/api/parking/reservations/${reservationId.trim()}`, {
+      // Construire l'URL en fonction de la méthode de recherche
+      let url = `${ENDPOINTS.parking.search}?`;
+      if (searchMethod === 'plate') {
+        url += `licencePlate=${encodeURIComponent(licencePlate.trim())}`;
+        console.log('Recherche par plaque:', licencePlate.trim());
+      } else {
+        url += `reservationId=${encodeURIComponent(reservationId.trim())}`;
+        console.log('Recherche par ID:', reservationId.trim());
+      }
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
@@ -54,7 +73,7 @@ const MesPlaces = () => {
 
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('Réservation non trouvée. Vérifiez votre ID de réservation.');
+          throw new Error('Réservation non trouvée. Vérifiez votre ' + (searchMethod === 'plate' ? 'plaque d\'immatriculation' : 'ID de réservation') + '.');
         } else if (response.status === 403) {
           throw new Error('Accès non autorisé. Connectez-vous d\'abord.');
         } else {
@@ -228,12 +247,11 @@ const MesPlaces = () => {
 
   // Fonction pour vérifier si on peut quitter le parking
   const handleCheckExit = async () => {
-    setExitLoading(true);
     setExitMessage(null);
 
     try {
       // D'abord récupérer les données à jour de la réservation
-      const searchResponse = await fetch(`http://localhost:8081/api/parking/search?reservationId=${reservation.id}`, {
+      const searchResponse = await fetch(`${ENDPOINTS.parking.search}?reservationId=${reservation.id}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
@@ -247,7 +265,7 @@ const MesPlaces = () => {
       }
 
       // Ensuite vérifier la sortie
-      const response = await fetch(`http://localhost:8081/api/parking/check-exit?reservationId=${reservation.id}`, {
+      const response = await fetch(`${ENDPOINTS.parking.checkExit}?reservationId=${reservation.id}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
@@ -287,7 +305,7 @@ const MesPlaces = () => {
     setExitLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8081/api/parking/confirm-exit?reservationId=${reservation.id}`, {
+      const response = await fetch(`${ENDPOINTS.parking.confirmExit}?reservationId=${reservation.id}`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json'
@@ -347,22 +365,67 @@ const MesPlaces = () => {
         {/* Formulaire de recherche */}
         <div className="search-form-container">
           <form onSubmit={handleSearch} className="search-form">
-            <div className="form-group">
-              <label htmlFor="reservationId">ID de réservation :</label>
-              <input
-                type="text"
-                id="reservationId"
-                value={reservationId}
-                onChange={(e) => setReservationId(e.target.value)}
-                placeholder="Exemple: d6185945-ea73-4587-a9e6-3910a1940bf8"
-                className="search-input"
-                disabled={loading}
-              />
+            {/* Sélecteur de méthode de recherche */}
+            <div className="search-method-selector">
+              <div className="method-title">🔍 Comment souhaitez-vous rechercher votre réservation ?</div>
+              <div className="method-buttons">
+                <button
+                  type="button"
+                  className={`method-btn ${searchMethod === 'plate' ? 'active' : ''}`}
+                  onClick={() => setSearchMethod('plate')}
+                >
+                  <span className="method-icon">🚗</span>
+                  <span className="method-text">Par plaque d'immatriculation</span>
+                  <span className="method-badge">Recommandé</span>
+                </button>
+                <button
+                  type="button"
+                  className={`method-btn ${searchMethod === 'id' ? 'active' : ''}`}
+                  onClick={() => setSearchMethod('id')}
+                >
+                  <span className="method-icon">🆔</span>
+                  <span className="method-text">Par ID de réservation</span>
+                </button>
+              </div>
             </div>
+
+            {/* Champ de recherche par plaque */}
+            {searchMethod === 'plate' && (
+              <div className="form-group">
+                <label htmlFor="licencePlate">Plaque d'immatriculation :</label>
+                <input
+                  type="text"
+                  id="licencePlate"
+                  value={licencePlate}
+                  onChange={(e) => setLicencePlate(e.target.value.toUpperCase())}
+                  placeholder="Exemple: AB-123-CD"
+                  className="search-input plate-input"
+                  disabled={loading}
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {/* Champ de recherche par ID */}
+            {searchMethod === 'id' && (
+              <div className="form-group">
+                <label htmlFor="reservationId">ID de réservation :</label>
+                <input
+                  type="text"
+                  id="reservationId"
+                  value={reservationId}
+                  onChange={(e) => setReservationId(e.target.value)}
+                  placeholder="Exemple: d6185945-ea73-4587-a9e6-3910a1940bf8"
+                  className="search-input"
+                  disabled={loading}
+                  autoFocus
+                />
+              </div>
+            )}
             
             <button 
               type="submit" 
-              disabled={loading || !reservationId.trim()}
+              disabled={loading || (searchMethod === 'plate' ? !licencePlate.trim() : !reservationId.trim())}
               className={`search-btn ${loading ? 'loading' : ''}`}
             >
               {loading ? (
@@ -378,9 +441,18 @@ const MesPlaces = () => {
 
           {/* Message d'aide */}
           <div className="help-message">
-            💡 <strong>Conseil :</strong> Votre ID de réservation vous a été communiqué lors de votre réservation. 
-            Il s'agit d'un identifiant unique au format UUID (par exemple : d6185945-ea73-4587-a9e6-3910a1940bf8).
-            Vous le trouverez sur votre page de confirmation après avoir effectué votre réservation.
+            {searchMethod === 'plate' ? (
+              <>
+                💡 <strong>Conseil :</strong> Utilisez simplement votre plaque d'immatriculation pour retrouver votre réservation active.
+                Format attendu : AB-123-CD ou AB123CD.
+              </>
+            ) : (
+              <>
+                💡 <strong>Conseil :</strong> Votre ID de réservation vous a été communiqué lors de votre réservation. 
+                Il s'agit d'un identifiant unique au format UUID (par exemple : d6185945-ea73-4587-a9e6-3910a1940bf8).
+                Vous le trouverez sur votre page de confirmation après avoir effectué votre réservation.
+              </>
+            )}
           </div>
         </div>
 

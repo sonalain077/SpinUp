@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AgentDashboard.css';
+import { API_URL, ENDPOINTS } from '../config';
 
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = API_URL;
 
 const AgentDashboard = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const AgentDashboard = () => {
       
       // Charger health check
       try {
-        const healthRes = await fetch(`${API_BASE_URL}/../health`);
+        const healthRes = await fetch(ENDPOINTS.health);
         if (healthRes.ok) {
           const healthData = await healthRes.json();
           setServerHealth(healthData.status || 'UP');
@@ -72,9 +73,9 @@ const AgentDashboard = () => {
       
       // Charger overview, infringements et historique en parallèle
       const [overviewRes, infringementsRes, historyRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/agent/overview`),
-        fetch(`${API_BASE_URL}/agent/infringements`),
-        fetch(`${API_BASE_URL}/agent/regularized-history`)
+        fetch(ENDPOINTS.agent.overview),
+        fetch(ENDPOINTS.agent.infringements),
+        fetch(ENDPOINTS.agent.regularizedHistory)
       ]);
 
       if (overviewRes.ok) {
@@ -583,8 +584,7 @@ const ParkingVehiclesList = ({ parkingName, onVehicleClick }) => {
   const loadVehicles = async () => {
     try {
       setLoading(true);
-      const encodedName = encodeURIComponent(parkingName);
-      const response = await fetch(`${API_BASE_URL}/agent/parking/${encodedName}/vehicles`);
+      const response = await fetch(ENDPOINTS.agent.parkingVehicles(parkingName));
       
       if (response.ok) {
         const data = await response.json();

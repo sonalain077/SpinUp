@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getVehicleTypeOptions } from '../lib/vehicleTypes';
+import { ENDPOINTS } from '../config';
 import './ParkingReservation.css';
 
 const ParkingReservation = () => {
@@ -274,11 +275,11 @@ const ParkingReservation = () => {
   /*
   const reserveParking = async (data) => {
     console.log('🚀 DEBUT REQUETE API');
-    console.log('📍 URL:', 'http://localhost:8081/api/parking/reserve');
+    console.log('📍 URL:', ENDPOINTS.parking.reserve);
     console.log('📤 Données brutes:', JSON.stringify(data, null, 2));
     
     try {
-      const response = await fetch('http://localhost:8081/api/parking/reserve', {
+      const response = await fetch(ENDPOINTS.parking.reserve, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

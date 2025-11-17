@@ -87,7 +87,118 @@
   text-align: center;
 }
 
-/* ID de réservation mis en avant */
+/* Mise en avant de la plaque d'immatriculation */
+.licence-plate-highlight {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 16px;
+  padding: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+}
+
+.plate-main-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.plate-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.plate-content {
+  flex: 1;
+}
+
+.plate-title {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.plate-instruction {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1rem;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.plate-instruction strong {
+  color: white;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.plate-value-box {
+  background: white;
+  border-radius: 10px;
+  padding: 16px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  margin-top: 8px;
+}
+
+.plate-emoji {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.plate-number {
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-family: 'Courier New', monospace;
+  color: #059669;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* ID de réservation en secondaire */
+.reservation-id-secondary {
+  background: #f7fafc;
+  border: 2px dashed #cbd5e0;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.reservation-id-secondary .id-label {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reservation-id-secondary .id-value-small {
+  color: #4a5568;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  display: inline-block;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  user-select: all;
+  transition: all 0.2s ease;
+}
+
+.reservation-id-secondary .id-value-small:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  transform: scale(1.02);
+}
+
+/* ID de réservation mis en avant (ancien style - conservé pour compatibilité) */
 .reservation-id-highlight {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;

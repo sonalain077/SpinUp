@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ENDPOINTS } from '../config';
 import './ParkingOccupancy.css';
 
 const ParkingOccupancy = () => {
@@ -11,7 +12,7 @@ const ParkingOccupancy = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:8081/api/parking/occupancy');
+      const response = await fetch(ENDPOINTS.parking.occupancy);
       if (!response.ok) {
         throw new Error('Erreur lors de la récupération des données');
       }

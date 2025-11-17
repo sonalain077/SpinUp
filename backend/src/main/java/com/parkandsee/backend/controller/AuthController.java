@@ -5,9 +5,6 @@ import com.parkandsee.backend.security.AuthResponse;
 import com.parkandsee.backend.security.JwtUtils;
 import com.parkandsee.backend.security.DemoUserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 

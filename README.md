@@ -58,7 +58,50 @@ Le frontend démarre sur : http://localhost:5174
 - **Dashboard Agent** : http://localhost:5174/agent
 - **API Backend** : http://localhost:8081/api
 
-## 📚 Documentation
+## � Lancement avec Docker
+
+### Prérequis
+
+- **Docker Desktop** installé et démarré
+  - Télécharger : https://www.docker.com/products/docker-desktop
+
+### Démarrage de l'Application
+
+Lancez l'ensemble de l'application (base de données, backend, frontend) avec une seule commande :
+
+```bash
+docker compose up --build
+```
+
+Cette commande va :
+1. Construire les images Docker du backend et du frontend
+2. Démarrer un conteneur PostgreSQL avec la base de données
+3. Démarrer le backend Spring Boot connecté à PostgreSQL
+4. Démarrer le frontend React servi par Nginx
+
+### Accès aux Services
+
+Une fois les conteneurs démarrés :
+
+- **Frontend** : http://localhost:5173
+- **API Backend** : http://localhost:8080
+- **Base de données PostgreSQL** :
+  - Host : `localhost:5432`
+  - Database : `spinup`
+  - Username : `spinup`
+  - Password : `spinup`
+
+### Arrêt de l'Application
+
+```bash
+# Arrêter les conteneurs
+docker compose down
+
+# Arrêter et supprimer les volumes (données perdues)
+docker compose down -v
+```
+
+## �📚 Documentation
 
 - **[TESTS.md](./TESTS.md)** - Tests automatisés complets
 - **[RESUME_TESTS.md](./RESUME_TESTS.md)** - Résumé des tests avec statistiques

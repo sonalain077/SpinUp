@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ENDPOINTS } from '../config';
 import './RallongerStationnement.css';
 
 const RallongerStationnement = () => {
@@ -132,7 +133,7 @@ const RallongerStationnement = () => {
         ? `licencePlate=${encodeURIComponent(searchValue.trim())}`
         : `reservationId=${encodeURIComponent(searchValue.trim())}`;
       
-      const response = await fetch(`http://localhost:8081/api/parking/search?${params}`, {
+      const response = await fetch(`${ENDPOINTS.parking.search}?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -272,7 +273,7 @@ const RallongerStationnement = () => {
       const extensionPrice = calculatePrice(parseInt(extensionDuration));
       
       // Appel API backend pour étendre la réservation
-      const response = await fetch('http://localhost:8081/api/parking/extend', {
+      const response = await fetch(ENDPOINTS.parking.extend, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

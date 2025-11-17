@@ -8,7 +8,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 @Entity
