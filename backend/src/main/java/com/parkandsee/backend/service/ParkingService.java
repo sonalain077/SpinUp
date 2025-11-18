@@ -6,10 +6,13 @@ import com.parkandsee.backend.dto.ExtensionRequest;
 import com.parkandsee.backend.dto.ExitResponse;
 import com.parkandsee.backend.dto.OverduePaymentRequest;
 import com.parkandsee.backend.dto.OverduePaymentResponse;
+import com.parkandsee.backend.dto.ParkingDTO;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.entity.VehicleType;
 import com.parkandsee.backend.entity.ReservationStatus;
+import com.parkandsee.backend.entity.ParkingEntity;
 import com.parkandsee.backend.repository.ReservationRepository;
+import com.parkandsee.backend.repository.ParkingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +20,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.Optional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ParkingService {
 
     private final ReservationRepository reservationRepository;
+    private final ParkingRepository parkingRepository;
 
-    public ParkingService(ReservationRepository reservationRepository) {
+    public ParkingService(ReservationRepository reservationRepository, 
+                         ParkingRepository parkingRepository) {
         this.reservationRepository = reservationRepository;
+        this.parkingRepository = parkingRepository;
     }
 
     @Transactional
@@ -247,5 +254,17 @@ public class ParkingService {
         reservationRepository.delete(reservation);
         return ExitResponse.allowed(msg, reservationId);
     }
+
+    /**
+     * Récupérer tous les parkings disponibles
+     * Utilisé pour afficher la liste des parkings dans le frontend
+     */
+    public List<ParkingDTO> getAllParkings() {
+        List<ParkingEntity> parkings = parkingRepository.findAll();
+        return parkings.stream()
+            .map(p -> new ParkingDTO(p.getId(), p.getName(), p.getAddress(), p.getTotalSpots()))
+            .collect(Collectors.toList());
+    }
 }
+
 

@@ -14,12 +14,14 @@ import com.parkandsee.backend.dto.ExitResponse;
 import com.parkandsee.backend.dto.ExtensionRequest;
 import com.parkandsee.backend.dto.PaymentRequest;
 import com.parkandsee.backend.dto.PaymentResponse;
+import com.parkandsee.backend.dto.ParkingDTO;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.service.ParkingService;
 import com.parkandsee.backend.dto.OverduePaymentRequest;
 import com.parkandsee.backend.dto.OverduePaymentResponse;
 
 import jakarta.validation.Valid;
+import java.util.List;
 
 
 @RestController
@@ -50,6 +52,16 @@ public class ParkingController {
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("Backend is running!");
+    }
+
+    /**
+     * Récupérer la liste de tous les parkings disponibles
+     * Endpoint public utilisé par le frontend pour afficher la liste des parkings
+     */
+    @GetMapping("/list")
+    public ResponseEntity<List<ParkingDTO>> getAllParkings() {
+        List<ParkingDTO> parkings = parkingService.getAllParkings();
+        return ResponseEntity.ok(parkings);
     }
     
     @GetMapping("/test-simple")

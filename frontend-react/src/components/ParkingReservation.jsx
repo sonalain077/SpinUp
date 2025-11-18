@@ -7,6 +7,10 @@ import './ParkingReservation.css';
 const ParkingReservation = () => {
   const navigate = useNavigate();
   
+  // État pour la liste des parkings chargés depuis le backend
+  const [parkings, setParkings] = useState([]);
+  const [loadingParkings, setLoadingParkings] = useState(true);
+  
   // Fonctions utilitaires pour les dates
   const roundToNextQuarterHour = (date) => {
     const minutes = date.getMinutes();
@@ -120,6 +124,44 @@ const ParkingReservation = () => {
   useEffect(() => {
     const formatted = getCurrentDateTime(); // Utilise la fonction qui arrondit automatiquement
     setFormData(prev => ({ ...prev, startAt: formatted }));
+  }, []);
+
+  // Charger la liste des parkings depuis le backend
+  useEffect(() => {
+    const loadParkings = async () => {
+      try {
+        setLoadingParkings(true);
+        // Utiliser le nouvel endpoint dédié pour récupérer les parkings
+        const response = await fetch(ENDPOINTS.parking.list);
+        
+        if (response.ok) {
+          const parkingList = await response.json();
+          // L'API renvoie directement un tableau de parkings [{id, name, address, totalSpots}]
+          if (Array.isArray(parkingList)) {
+            const formatted = parkingList.map(p => ({
+              id: p.id,
+              name: p.name,
+              address: p.address,
+              capacity: p.totalSpots,
+              used: 0 // Sera mis à jour en temps réel si besoin
+            })).sort((a, b) => a.name.localeCompare(b.name));
+            
+            setParkings(formatted);
+            console.log('✅ Parkings chargés depuis l\'API:', formatted.length);
+          }
+        } else {
+          console.error('❌ Erreur chargement parkings:', response.status);
+          setParkings([]);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des parkings:', error);
+        setParkings([]);
+      } finally {
+        setLoadingParkings(false);
+      }
+    };
+    
+    loadParkings();
   }, []);
 
   // Validation du formulaire
@@ -598,7 +640,7 @@ const ParkingReservation = () => {
           </div>
         </div>
 
-        {/* Adresse */}
+        {/* Sélection du parking */}
         <div className="form-group">
           <label htmlFor="address">Parking :</label>
           <select
@@ -608,13 +650,16 @@ const ParkingReservation = () => {
             onChange={handleInputChange}
             className={getValidationClass('address')}
             required
+            disabled={loadingParkings}
           >
-            <option value="">-- Sélectionnez un parking --</option>
-            <option value="Parking Centre Ville">🏙️ Parking Centre Ville</option>
-            <option value="Parking Gare">🚉 Parking Gare</option>
-            <option value="Parking République">🏢 Parking République</option>
-            <option value="Parking Liberté">🌳 Parking Liberté</option>
-            <option value="Parking Mairie">🏛️ Parking Mairie</option>
+            <option value="">
+              {loadingParkings ? '⏳ Chargement des parkings...' : '-- Sélectionnez un parking --'}
+            </option>
+            {parkings.map((parking) => (
+              <option key={parking.id} value={parking.name}>
+                🅿️ {parking.name} ({parking.capacity} places)
+              </option>
+            ))}
           </select>
         </div>
 

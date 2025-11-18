@@ -1,153 +1,121 @@
 /**
  * Utilitaires pour la gestion des parkings
- * Centralise les noms de parkings et leur normalisation
+ * VERSION DYNAMIQUE - Charge les parkings depuis l'API backend
  */
+
+import { ENDPOINTS } from '../services/config';
+
+// Cache pour éviter trop de requêtes
+let parkingsCache = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 60000; // 1 minute
 
 /**
- * Liste des 5 parkings actifs du système
- * IMPORTANT: Ces noms DOIVENT correspondre exactement à ceux dans la base de données (champ 'address')
+ * Récupère la liste des parkings depuis l'API backend
+ * @returns {Promise<Array>} Liste des parkings [{id, name, address, totalSpots}]
  */
-export const PARKING_NAMES = {
-  CENTRE_VILLE: 'Parking Centre Ville',
-  GARE: 'Parking Gare',
-  REPUBLIQUE: 'Parking République',
-  LIBERTE: 'Parking Liberté',
-  MAIRIE: 'Parking Mairie'
-};
-
-/**
- * Configuration complète des parkings
- */
-const parkingConfig = {
-  'Parking Centre Ville': {
-    name: 'Parking Centre Ville',
-    shortName: 'Centre Ville',
-    icon: '🏙️',
-    capacity: 40,
-    color: '#3B82F6'
-  },
-  'Parking Gare': {
-    name: 'Parking Gare',
-    shortName: 'Gare',
-    icon: '🚉',
-    capacity: 50,
-    color: '#10B981'
-  },
-  'Parking République': {
-    name: 'Parking République',
-    shortName: 'République',
-    icon: '🏢',
-    capacity: 30,
-    color: '#8B5CF6'
-  },
-  'Parking Liberté': {
-    name: 'Parking Liberté',
-    shortName: 'Liberté',
-    icon: '🌳',
-    capacity: 25,
-    color: '#F59E0B'
-  },
-  'Parking Mairie': {
-    name: 'Parking Mairie',
-    shortName: 'Mairie',
-    icon: '🏛️',
-    capacity: 35,
-    color: '#EF4444'
-  }
-};
-
-/**
- * Normalise un nom de parking (gère les variations d'encodage et de casse)
- * @param {string} parkingName - Nom du parking potentiellement mal encodé
- * @returns {string} Nom normalisé ou nom original si non reconnu
- */
-export function normalizeParkingName(parkingName) {
-  if (!parkingName) return parkingName;
-
-  // Nettoyer et normaliser
-  const cleaned = parkingName.trim();
-
-  // Vérification directe
-  if (parkingConfig[cleaned]) {
-    return cleaned;
+export async function fetchParkings() {
+  const now = Date.now();
+  
+  // Utiliser le cache si valide
+  if (parkingsCache && (now - lastFetchTime) < CACHE_DURATION) {
+    return parkingsCache;
   }
 
-  // Recherche insensible à la casse
-  const lowerName = cleaned.toLowerCase();
-  const found = Object.keys(parkingConfig).find(
-    key => key.toLowerCase() === lowerName
-  );
-
-  return found || parkingName;
+  try {
+    const response = await fetch(ENDPOINTS.parking.list);
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP ${response.status}`);
+    }
+    
+    const parkings = await response.json();
+    
+    // Mettre à jour le cache
+    parkingsCache = parkings;
+    lastFetchTime = now;
+    
+    console.log('✅ Parkings chargés depuis l\'API:', parkings.length);
+    return parkings;
+  } catch (error) {
+    console.error('❌ Erreur chargement parkings:', error);
+    
+    // Retourner le cache même expiré si erreur réseau
+    if (parkingsCache) {
+      console.warn('⚠️ Utilisation du cache expiré');
+      return parkingsCache;
+    }
+    
+    return [];
+  }
 }
 
 /**
- * Retourne l'icône d'un parking
+ * Retourne l'icône d'un parking basée sur son nom
  * @param {string} parkingName - Nom du parking
  * @returns {string} Emoji icône
  */
 export function getParkingIcon(parkingName) {
-  const normalized = normalizeParkingName(parkingName);
-  return parkingConfig[normalized]?.icon || '🅿️';
+  if (!parkingName) return '🅿️';
+  
+  const name = parkingName.toLowerCase();
+  
+  // Mapping basé sur les mots-clés
+  if (name.includes('centre') || name.includes('ville')) return '🏙️';
+  if (name.includes('gare')) return '🚉';
+  if (name.includes('république')) return '🏢';
+  if (name.includes('hôtel') || name.includes('mairie')) return '🏛️';
+  if (name.includes('cité') || name.includes('judiciaire')) return '⚖️';
+  if (name.includes('arts') || name.includes('artiste')) return '🎨';
+  
+  return '🅿️'; // Icône par défaut
 }
 
 /**
- * Retourne le nom court d'un parking
+ * Retourne le nom court d'un parking (sans "Parking")
  * @param {string} parkingName - Nom du parking
  * @returns {string} Nom court
  */
 export function getParkingShortName(parkingName) {
-  const normalized = normalizeParkingName(parkingName);
-  return parkingConfig[normalized]?.shortName || parkingName;
-}
-
-/**
- * Retourne la capacité d'un parking
- * @param {string} parkingName - Nom du parking
- * @returns {number} Capacité (nombre de places)
- */
-export function getParkingCapacity(parkingName) {
-  const normalized = normalizeParkingName(parkingName);
-  return parkingConfig[normalized]?.capacity || 0;
+  if (!parkingName) return '';
+  return parkingName.replace(/^Parking\s+/i, '').trim();
 }
 
 /**
  * Retourne la couleur associée à un parking
- * @param {string} parkingName - Nom du parking
+ * @param {number} index - Index du parking dans la liste
  * @returns {string} Code couleur hexadécimal
  */
-export function getParkingColor(parkingName) {
-  const normalized = normalizeParkingName(parkingName);
-  return parkingConfig[normalized]?.color || '#6B7280';
-}
-
-/**
- * Retourne la liste de tous les parkings disponibles
- * @returns {Array} Liste des parkings avec toutes leurs infos
- */
-export function getAllParkings() {
-  return Object.values(parkingConfig);
-}
-
-/**
- * Vérifie si un nom de parking est valide
- * @param {string} parkingName - Nom du parking à vérifier
- * @returns {boolean} True si valide
- */
-export function isValidParking(parkingName) {
-  if (!parkingName) return false;
-  const normalized = normalizeParkingName(parkingName);
-  return parkingConfig.hasOwnProperty(normalized);
+export function getParkingColor(index) {
+  const colors = [
+    '#3B82F6', // Bleu
+    '#10B981', // Vert
+    '#8B5CF6', // Violet
+    '#F59E0B', // Orange
+    '#EF4444', // Rouge
+    '#EC4899', // Rose
+    '#6366F1', // Indigo
+    '#14B8A6'  // Teal
+  ];
+  return colors[index % colors.length];
 }
 
 /**
  * Retourne l'affichage formaté d'un parking (icône + nom)
  * @param {string} parkingName - Nom du parking
  * @param {boolean} short - Utiliser le nom court
- * @returns {string} Format "🏙️ Parking Centre Ville"
+ * @returns {string} Format "🏙️ Parking Centre-Ville"
  */
 export function getParkingDisplay(parkingName, short = false) {
   const icon = getParkingIcon(parkingName);
   const name = short ? getParkingShortName(parkingName) : parkingName;
   return `${icon} ${name}`;
+}
+
+/**
+ * Invalide le cache (forcer rechargement)
+ */
+export function clearParkingsCache() {
+  parkingsCache = null;
+  lastFetchTime = 0;
 }

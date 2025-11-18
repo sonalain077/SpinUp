@@ -5,7 +5,6 @@ import {
   computeGlobalStats,
   groupOverdueTicketsByParking
 } from '../lib/overdue';
-import { normalizeParkingName } from '../lib/parkings';
 
 const API_BASE = '/api/agent/overdue';
 const REFRESH_INTERVAL = 30000; // 30 secondes
@@ -67,7 +66,7 @@ export function useAgentData() {
         ...t,
         startTime: t.startAt,           // startAt → startTime
         duration: t.durationMinutes,    // durationMinutes → duration
-        parkingZone: normalizeParkingName(t.address),  // address → parkingZone (normalisé)
+        parkingZone: t.address,         // address → parkingZone (nom tel quel depuis BDD)
         endTime: t.updatedAt            // Pour l'historique
       }));
 
@@ -75,12 +74,12 @@ export function useAgentData() {
         ...h,
         startTime: h.startAt,
         duration: h.durationMinutes,
-        parkingZone: normalizeParkingName(h.address),  // Normaliser aussi l'historique
+        parkingZone: h.address,         // Nom tel quel depuis BDD
         endTime: h.updatedAt
       }));
 
       const parkingsData = occupationData.map(p => ({
-        name: normalizeParkingName(p.parkingName),  // Normaliser le nom du parking
+        name: p.parkingName,            // Nom tel quel depuis BDD
         capacity: p.totalCapacity,
         occupiedPlaces: p.occupiedPlaces,
         availablePlaces: p.availablePlaces,

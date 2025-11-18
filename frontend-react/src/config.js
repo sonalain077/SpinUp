@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     checkExit: `${API_URL}/parking/check-exit`,
     extend: `${API_URL}/parking/extend`,
     occupancy: `${API_URL}/parking/occupancy`,
+    list: `${API_URL}/parking/list`, // Liste de tous les parkings
   },
   agent: {
     overview: `${API_URL}/agent/overview`,
