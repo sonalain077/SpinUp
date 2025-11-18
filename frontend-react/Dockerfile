@@ -8,6 +8,9 @@ RUN npm install
 
 COPY . .
 
+# Utiliser .env.docker pour la configuration Docker (port 8080)
+RUN cp .env.docker .env || true
+
 RUN npm run build
 
 FROM nginx:alpine

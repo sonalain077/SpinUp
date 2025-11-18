@@ -11,6 +11,17 @@ const AgentDashboard = () => {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [serverHealth, setServerHealth] = useState('UP');
 
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!isAuthenticated || !authToken) {
+      console.log('❌ Non authentifié, redirection vers /login');
+      navigate('/login');
+    }
+  }, [navigate]);
+
   // Fonction de déconnexion
   const handleLogout = () => {
     localStorage.removeItem('authToken');

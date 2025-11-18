@@ -5,8 +5,10 @@ import com.parkandsee.backend.dto.ParkingInfringementsDTO;
 import com.parkandsee.backend.dto.ParkingStatsDTO;
 import com.parkandsee.backend.dto.RegularizedHistoryDTO;
 import com.parkandsee.backend.dto.VehicleDetailDTO;
+import com.parkandsee.backend.entity.ParkingEntity;
 import com.parkandsee.backend.entity.ReservationEntity;
 import com.parkandsee.backend.entity.ReservationStatus;
+import com.parkandsee.backend.repository.ParkingRepository;
 import com.parkandsee.backend.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,18 +23,11 @@ import java.util.stream.Collectors;
 public class AgentService {
 
     private final ReservationRepository reservationRepository;
-    
-    // Capacités des parkings (configuration en dur pour l'instant)
-    private static final Map<String, Integer> PARKING_CAPACITIES = Map.of(
-        "Parking Centre Ville", 40,
-        "Parking Gare", 50,
-        "Parking République", 30,
-        "Parking Liberté", 25,
-        "Parking Mairie", 35
-    );
+    private final ParkingRepository parkingRepository;
 
-    public AgentService(ReservationRepository reservationRepository) {
+    public AgentService(ReservationRepository reservationRepository, ParkingRepository parkingRepository) {
         this.reservationRepository = reservationRepository;
+        this.parkingRepository = parkingRepository;
     }
 
     /**
@@ -42,25 +37,35 @@ public class AgentService {
         Instant now = Instant.now();
         LocalDateTime nowLocal = LocalDateTime.now();
         
+        // Récupérer TOUS les parkings de la BDD
+        List<ParkingEntity> allParkings = parkingRepository.findAll();
         List<ReservationEntity> allReservations = reservationRepository.findAll();
         
-        // Filtrer les véhicules garés (ACTIVE et endAt > now)
+        // Filtrer les véhicules ACTUELLEMENT garés (ACTIVE, n'ont PAS dépassé)
         List<ReservationEntity> parkedVehicles = allReservations.stream()
             .filter(r -> r.getStatus() == ReservationStatus.ACTIVE)
-            .filter(r -> r.getEndAt() != null && r.getEndAt().isAfter(nowLocal))
+            .filter(r -> {
+                LocalDateTime endAt = r.getEndAt();
+                return endAt != null && endAt.isAfter(nowLocal);
+            })
             .collect(Collectors.toList());
         
-        // Filtrer les véhicules en excès (ACTIVE et endAt < now)
+        // Filtrer les véhicules EN EXCÈS (ACTIVE et endAt < now)
         List<ReservationEntity> exceededVehicles = allReservations.stream()
             .filter(r -> r.getStatus() == ReservationStatus.ACTIVE)
-            .filter(r -> r.getEndAt() != null && r.getEndAt().isBefore(nowLocal))
+            .filter(r -> {
+                LocalDateTime endAt = r.getEndAt();
+                return endAt != null && endAt.isBefore(nowLocal);
+            })
             .collect(Collectors.toList());
         
         // Calcul des totaux
-        int totalCapacity = PARKING_CAPACITIES.values().stream()
-            .mapToInt(Integer::intValue)
+        int totalCapacity = allParkings.stream()
+            .mapToInt(ParkingEntity::getTotalSpots)
             .sum();
-        int totalParked = parkedVehicles.size();
+        
+        // TOUS les véhicules actifs = garés en règle + en excès
+        int totalParked = parkedVehicles.size() + exceededVehicles.size();
         double saturationIndex = totalCapacity > 0 ? (double) totalParked / totalCapacity : 0.0;
         
         AgentOverviewDTO.TotalsDTO totals = new AgentOverviewDTO.TotalsDTO(
@@ -68,7 +73,7 @@ public class AgentService {
         );
         
         // Statistiques par parking
-        List<ParkingStatsDTO> perParking = calculateParkingStats(parkedVehicles);
+        List<ParkingStatsDTO> perParking = calculateParkingStats(allParkings, allReservations, nowLocal);
         
         // Parking le plus rempli
         AgentOverviewDTO.MostFilledDTO mostFilled = perParking.stream()
@@ -108,7 +113,10 @@ public class AgentService {
         
         List<ReservationEntity> exceededReservations = reservationRepository.findAll().stream()
             .filter(r -> r.getStatus() == ReservationStatus.ACTIVE || r.getStatus() == ReservationStatus.SIGNALE)
-            .filter(r -> r.getEndAt() != null && r.getEndAt().isBefore(now))
+            .filter(r -> {
+                LocalDateTime endAt = r.getEndAt();
+                return endAt != null && endAt.isBefore(now);
+            })
             .collect(Collectors.toList());
         
         // Grouper par parking
@@ -154,20 +162,27 @@ public class AgentService {
     /**
      * Calcule les statistiques par parking
      */
-    private List<ParkingStatsDTO> calculateParkingStats(List<ReservationEntity> parkedVehicles) {
-        Map<String, Long> countByParking = parkedVehicles.stream()
+    private List<ParkingStatsDTO> calculateParkingStats(
+            List<ParkingEntity> allParkings,
+            List<ReservationEntity> allReservations,
+            LocalDateTime now) {
+        
+        // Compter les véhicules ACTIFS (en règle + en excès) par parking
+        Map<String, Long> countByParking = allReservations.stream()
+            .filter(r -> r.getStatus() == ReservationStatus.ACTIVE)
             .collect(Collectors.groupingBy(
                 ReservationEntity::getAddress,
                 Collectors.counting()
             ));
         
-        return PARKING_CAPACITIES.entrySet().stream()
-            .map(entry -> {
-                String parkingName = entry.getKey();
-                int capacity = entry.getValue();
+        // Créer les stats pour TOUS les parkings de la BDD
+        return allParkings.stream()
+            .map(parking -> {
+                String parkingName = parking.getName();
+                int capacity = parking.getTotalSpots();
                 int used = countByParking.getOrDefault(parkingName, 0L).intValue();
                 
-                return new ParkingStatsDTO(null, parkingName, used, capacity);
+                return new ParkingStatsDTO(parking.getId(), parkingName, used, capacity);
             })
             .sorted(Comparator.comparing(ParkingStatsDTO::getParkingName))
             .collect(Collectors.toList());
