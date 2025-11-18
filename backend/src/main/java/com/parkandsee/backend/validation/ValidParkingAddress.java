@@ -12,7 +12,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidParkingAddress {
-    String message() default "Parking invalide. Parkings disponibles: Parking Centre Ville, Parking Gare, Parking République, Parking Liberté, Parking Mairie";
+    String message() default "Parking invalide. Veuillez sélectionner un parking existant.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

@@ -1,25 +1,25 @@
 package com.parkandsee.backend.validation;
 
+import com.parkandsee.backend.entity.ParkingEntity;
+import com.parkandsee.backend.repository.ParkingRepository;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Validateur pour l'annotation @ValidParkingAddress
- * Vérifie que l'adresse correspond à l'un des 5 parkings actifs
+ * Vérifie que l'adresse correspond à un parking existant en base de données
  */
+@Component
 public class ValidParkingAddressValidator implements ConstraintValidator<ValidParkingAddress, String> {
 
-    /**
-     * Liste des 5 parkings valides dans le système
-     */
-    private static final Set<String> VALID_PARKINGS = Set.of(
-        "Parking Centre Ville",
-        "Parking Gare",
-        "Parking République",
-        "Parking Liberté",
-        "Parking Mairie"
-    );
+    @Autowired
+    private ParkingRepository parkingRepository;
 
     @Override
     public void initialize(ValidParkingAddress constraintAnnotation) {
@@ -33,25 +33,24 @@ public class ValidParkingAddressValidator implements ConstraintValidator<ValidPa
             return true;
         }
 
+        // Charger les parkings depuis la BDD
+        List<ParkingEntity> parkings = parkingRepository.findAll();
+        Set<String> validParkingNames = parkings.stream()
+            .map(ParkingEntity::getName)
+            .collect(Collectors.toSet());
+
         // Vérifier si le parking est dans la liste valide
-        boolean valid = VALID_PARKINGS.contains(address);
+        boolean valid = validParkingNames.contains(address);
 
         if (!valid) {
             // Message personnalisé avec la liste des parkings disponibles
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
                 "Parking '" + address + "' non reconnu. Parkings disponibles: " + 
-                String.join(", ", VALID_PARKINGS)
+                String.join(", ", validParkingNames)
             ).addConstraintViolation();
         }
 
         return valid;
-    }
-
-    /**
-     * Retourne la liste des parkings valides (utile pour tests ou API)
-     */
-    public static Set<String> getValidParkings() {
-        return VALID_PARKINGS;
     }
 }
